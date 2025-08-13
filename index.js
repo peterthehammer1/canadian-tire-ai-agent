@@ -417,10 +417,35 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('🔧 Direct function data received from Retell AI');
       console.log('📊 Data:', JSON.stringify(req.body, null, 2));
       
-      const callId = 'retell-function-' + Date.now();
+      // Try to find existing session by phone number
+      let existingSession = null;
+      let existingCallId = null;
       
-      // Create new session for this function call
-      const session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
+      if (req.body.phone && req.body.phone !== 'unknown') {
+        // Look for existing session with this phone number
+        const allSessions = callSessionManager.getAllSessions();
+        for (const [callId, session] of allSessions.entries()) {
+          if (session.customerInfo.phone === req.body.phone) {
+            existingSession = session;
+            existingCallId = callId;
+            break;
+          }
+        }
+      }
+      
+      let callId, session;
+      
+      if (existingSession) {
+        // Update existing session
+        callId = existingCallId;
+        session = existingSession;
+        console.log('🔄 Updating existing session for phone:', req.body.phone);
+      } else {
+        // Create new session
+        callId = 'retell-function-' + Date.now();
+        session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
+        console.log('🆕 Creating new session for phone:', req.body.phone);
+      }
       
       // Update session with all the data
       Object.entries(req.body).forEach(([key, value]) => {
@@ -429,8 +454,28 @@ app.post('/webhook/ai', async (req, res) => {
         }
       });
       
+      // Check if we have enough info to book an appointment
+      const customerInfo = session.customerInfo;
+      const hasRequiredInfo = customerInfo.name && customerInfo.phone && 
+                             customerInfo.serviceType && customerInfo.location &&
+                             customerInfo.preferredDate && customerInfo.preferredTime;
+      
+      if (hasRequiredInfo && !session.appointmentBooked) {
+        console.log('✅ All required info collected, ready to book appointment');
+        // Here you would trigger the appointment booking flow
+        // For now, mark as ready for booking
+        session.appointmentBooked = true;
+        session.appointmentDetails = {
+          date: customerInfo.preferredDate,
+          time: customerInfo.preferredTime,
+          service: customerInfo.serviceType,
+          location: customerInfo.location
+        };
+      }
+      
       console.log('✅ Direct function data processed for call:', callId);
       console.log('📝 Updated customer info:', session.customerInfo);
+      console.log('📅 Appointment status:', session.appointmentBooked ? 'Ready' : 'Collecting info');
     } else {
       console.log('❓ Unknown event type:', event_type);
       console.log('📋 Full payload:', JSON.stringify(req.body, null, 2));
