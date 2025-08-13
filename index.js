@@ -309,35 +309,59 @@ app.get('/api/call/sessions', (req, res) => {
   }
 });
 
-// Webhook endpoint for AI service (simulated)
+// Webhook endpoint for AI service
 app.post('/webhook/ai', async (req, res) => {
   try {
-    const { event_type, data } = req.body;
+    console.log('📞 Webhook received!');
+    console.log('📋 Headers:', req.headers);
+    console.log('📦 Body:', JSON.stringify(req.body, null, 2));
     
-    console.log(`📞 AI Service Webhook: ${event_type}`, data);
+    // Handle different possible data formats from Retell AI
+    const event_type = req.body.event_type || req.body.type || req.body.event;
+    const data = req.body.data || req.body.payload || req.body;
     
-    if (event_type === 'call_started') {
+    console.log(`🎯 Extracted - Event Type: ${event_type}`);
+    console.log(`📊 Extracted - Data:`, JSON.stringify(data, null, 2));
+    
+    if (event_type === 'call_started' || event_type === 'start') {
       // Create a new call session
-      const session = callSessionManager.createSession(data.call_id, data.customer_phone);
-      console.log('Call started:', data.call_id, 'Session created:', session.callId);
-    } else if (event_type === 'call_ended') {
+      const callId = data.call_id || data.callId || data.id;
+      const customerPhone = data.customer_phone || data.phone || data.customerPhone;
+      
+      if (callId) {
+        const session = callSessionManager.createSession(callId, customerPhone);
+        console.log('✅ Call started:', callId, 'Session created:', session.callId);
+      } else {
+        console.log('⚠️ Call started but no call ID found');
+      }
+    } else if (event_type === 'call_ended' || event_type === 'end') {
       // End the call session
-      callSessionManager.endSession(data.call_id);
-      console.log('Call ended:', data.call_id);
-    } else if (event_type === 'transcript') {
-      // Process transcript for intent recognition (simplified)
-      console.log('Transcript received:', data.transcript);
+      const callId = data.call_id || data.callId || data.id;
+      if (callId) {
+        callSessionManager.endSession(callId);
+        console.log('✅ Call ended:', callId);
+      }
+    } else if (event_type === 'transcript' || event_type === 'message') {
+      // Process transcript for intent recognition
+      const transcript = data.transcript || data.message || data.text;
+      const callId = data.call_id || data.callId || data.id;
+      
+      console.log('📝 Transcript received for call:', callId);
+      console.log('💬 Content:', transcript);
       
       // Here you would integrate with your AI service to:
       // 1. Extract customer information from conversation
       // 2. Update the call session
       // 3. Trigger availability checks
       // 4. Handle appointment booking
+    } else {
+      console.log('❓ Unknown event type:', event_type);
+      console.log('📋 Full payload:', JSON.stringify(req.body, null, 2));
     }
     
     res.json({ success: true, message: 'Webhook processed successfully' });
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('❌ Webhook error:', error);
     res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
