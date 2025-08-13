@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canadian Tire AI Agent - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 1px solid #e1e8ed;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .error {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #e74c3c;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+            color: #424242;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Canadian Tire AI Agent</h1>
+            <p>Intelligent Customer Service & Appointment Booking System</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <h3>📋 About This Demo</h3>
+                <p>This is a demonstration of the Canadian Tire AI Customer Service Agent. The system can:</p>
+                <ul>
+                    <li>Check appointment availability for different service types</li>
+                    <li>Book appointments with full customer information collection</li>
+                    <li>Manage scheduling with 45-minute service + 15-minute wrap-up periods</li>
+                    <li>Handle Oil Changes, Tire Rotations, and General Service</li>
+                    <li>Provide roadside assistance reminders</li>
+                </ul>
+            </div>
+
+            <div class="section">
+                <h2>🔍 Check Availability</h2>
+                <form id="availabilityForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="checkDate">Date:</label>
+                            <input type="date" id="checkDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="checkLocation">Location:</label>
+                            <input type="text" id="checkLocation" placeholder="e.g., Toronto Downtown" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="checkServiceType">Service Type:</label>
+                        <select id="checkServiceType" required>
+                            <option value="">Select a service</option>
+                            <option value="oil_change">Oil Change</option>
+                            <option value="tire_rotation">Seasonal Tire Rotation</option>
+                            <option value="general_service">General Check-up/Repair</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Check Availability</button>
+                </form>
+                <div id="availabilityResult"></div>
+            </div>
+
+            <div class="section">
+                <h2>📅 Book Appointment</h2>
+                <form id="bookingForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="location">Location:</label>
+                            <input type="text" id="location" placeholder="e.g., Toronto Downtown" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fullName">Full Name:</label>
+                            <input type="text" id="fullName" placeholder="John Doe" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phoneNumber">Phone Number:</label>
+                            <input type="tel" id="phoneNumber" placeholder="416-555-0123" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" placeholder="john.doe@email.com" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="carMake">Car Make:</label>
+                            <input type="text" id="carMake" placeholder="Toyota" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="carModel">Car Model:</label>
+                            <input type="text" id="carModel" placeholder="Camry" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="carYear">Car Year:</label>
+                            <input type="number" id="carYear" placeholder="2020" min="1990" max="2025" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="serviceType">Service Type:</label>
+                            <select id="serviceType" required>
+                                <option value="">Select a service</option>
+                                <option value="oil_change">Oil Change</option>
+                                <option value="tire_rotation">Seasonal Tire Rotation</option>
+                                <option value="general_service">General Check-up/Repair</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">Appointment Date:</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="time">Appointment Time:</label>
+                            <select id="time" required>
+                                <option value="">Select time</option>
+                                <option value="08:00">8:00 AM</option>
+                                <option value="09:00">9:00 AM</option>
+                                <option value="10:00">10:00 AM</option>
+                                <option value="11:00">11:00 AM</option>
+                                <option value="12:00">12:00 PM</option>
+                                <option value="13:00">1:00 PM</option>
+                                <option value="14:00">2:00 PM</option>
+                                <option value="15:00">3:00 PM</option>
+                                <option value="16:00">4:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="loyaltyMember"> Are you a member of the Canadian Tire loyalty program?
+                        </label>
+                    </div>
+                    <button type="submit" class="btn">Book Appointment</button>
+                </form>
+                <div id="bookingResult"></div>
+            </div>
+
+            <div class="section">
+                <h2>📊 View Appointments</h2>
+                <form id="viewForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="viewDate">Date (optional):</label>
+                            <input type="date" id="viewDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="viewLocation">Location (optional):</label>
+                            <input type="text" id="viewLocation" placeholder="e.g., Toronto Downtown">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">View Appointments</button>
+                </form>
+                <div id="viewResult"></div>
+            </div>
+
+            <div class="section">
+                <h2>📈 Statistics</h2>
+                <form id="statsForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="statsDate">Date:</label>
+                            <input type="date" id="statsDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="statsLocation">Location:</label>
+                            <input type="text" id="statsLocation" placeholder="e.g., Toronto Downtown" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Get Statistics</button>
+                </form>
+                <div id="statsResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set default dates
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                input.value = tomorrow.toISOString().split('T')[0];
+            });
+        });
+
+        // API base URL
+        const API_BASE = 'http://localhost:3001';
+
+        // Utility functions
+        function showLoading(elementId) {
+            document.getElementById(elementId).innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Processing...</p>
+                </div>
+            `;
+        }
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="result ${isError ? 'error' : ''}">
+                    ${JSON.stringify(data, null, 2)}
+                </div>
+            `;
+        }
+
+        // Check Availability
+        document.getElementById('availabilityForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                date: document.getElementById('checkDate').value,
+                location: document.getElementById('checkLocation').value,
+                serviceType: document.getElementById('checkServiceType').value
+            };
+
+            showLoading('availabilityResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/check-availability`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('availabilityResult', result);
+                } else {
+                    showResult('availabilityResult', result, true);
+                }
+            } catch (error) {
+                showResult('availabilityResult', { error: error.message }, true);
+            }
+        });
+
+        // Book Appointment
+        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                location: document.getElementById('location').value,
+                fullName: document.getElementById('fullName').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                email: document.getElementById('email').value,
+                carMake: document.getElementById('carMake').value,
+                carModel: document.getElementById('carModel').value,
+                carYear: document.getElementById('carYear').value,
+                serviceType: document.getElementById('serviceType').value,
+                loyaltyMember: document.getElementById('loyaltyMember').checked,
+                date: document.getElementById('date').value,
+                time: document.getElementById('time').value
+            };
+
+            showLoading('bookingResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/book-appointment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('bookingResult', result);
+                } else {
+                    showResult('bookingResult', result, true);
+                }
+            } catch (error) {
+                showResult('bookingResult', { error: error.message }, true);
+            }
+        });
+
+        // View Appointments
+        document.getElementById('viewForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const params = new URLSearchParams();
+            if (document.getElementById('viewDate').value) {
+                params.append('date', document.getElementById('viewDate').value);
+            }
+            if (document.getElementById('viewLocation').value) {
+                params.append('location', document.getElementById('viewLocation').value);
+            }
+
+            showLoading('viewResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/appointments?${params}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('viewResult', result);
+                } else {
+                    showResult('viewResult', result, true);
+                }
+            } catch (error) {
+                showResult('viewResult', { error: error.message }, true);
+            }
+        });
+
+        // Get Statistics
+        document.getElementById('statsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const params = new URLSearchParams({
+                date: document.getElementById('statsDate').value,
+                location: document.getElementById('statsLocation').value
+            });
+
+            showLoading('statsResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/statistics?${params}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult('statsResult', result);
+                } else {
+                    showResult('statsResult', result, true);
+                }
+            } catch (error) {
+                showResult('statsResult', { error: error.message }, true);
+            }
+        });
+    </script>
+</body>
+</html>

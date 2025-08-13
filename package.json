@@ -1,0 +1,35 @@
+{
+  "name": "canadian-tire-ai-agent",
+  "version": "1.0.0",
+  "description": "AI Customer Service agent for Canadian Tire",
+  "main": "index.js",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "node test-example.js",
+    "test-call-flow": "node test-call-flow.js",
+    "build": "echo 'No build step required'",
+    "vercel-build": "echo 'No build step required'"
+  },
+  "keywords": [
+    "canadian-tire",
+    "customer-service",
+    "appointment-booking",
+    "ai-agent"
+  ],
+  "author": "Canadian Tire AI Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "moment": "^2.29.4",
+    "uuid": "^9.0.1",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
