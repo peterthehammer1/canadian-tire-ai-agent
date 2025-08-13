@@ -412,6 +412,25 @@ app.post('/webhook/ai', async (req, res) => {
       
       console.log('✅ Function data processed for call:', callId);
       console.log('📝 Updated customer info:', session.customerInfo);
+    } else if (req.body.serviceType || req.body.name || req.body.phone) {
+      // Handle direct data format from Retell AI (when function data is sent directly)
+      console.log('🔧 Direct function data received from Retell AI');
+      console.log('📊 Data:', JSON.stringify(req.body, null, 2));
+      
+      const callId = 'retell-function-' + Date.now();
+      
+      // Create new session for this function call
+      const session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
+      
+      // Update session with all the data
+      Object.entries(req.body).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          callSessionManager.updateCustomerInfo(callId, key, value);
+        }
+      });
+      
+      console.log('✅ Direct function data processed for call:', callId);
+      console.log('📝 Updated customer info:', session.customerInfo);
     } else {
       console.log('❓ Unknown event type:', event_type);
       console.log('📋 Full payload:', JSON.stringify(req.body, null, 2));
