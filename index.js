@@ -424,10 +424,15 @@ app.post('/webhook/ai', async (req, res) => {
       if (req.body.phone && req.body.phone !== 'unknown') {
         // Look for existing session with this phone number
         const allSessions = callSessionManager.getAllSessions();
-        for (const [callId, session] of allSessions.entries()) {
+        console.log('🔍 Looking for existing session with phone:', req.body.phone);
+        console.log('📋 Available sessions:', allSessions.length);
+        
+        for (const session of allSessions) {
+          console.log('📞 Checking session phone:', session.customerInfo.phone, 'vs', req.body.phone);
           if (session.customerInfo.phone === req.body.phone) {
             existingSession = session;
-            existingCallId = callId;
+            existingCallId = session.callId;
+            console.log('✅ Found existing session:', existingCallId);
             break;
           }
         }
