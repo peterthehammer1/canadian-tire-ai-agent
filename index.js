@@ -314,7 +314,17 @@ app.get('/api/call/sessions', (req, res) => {
   }
 });
 
-// Webhook endpoint for AI service
+// Webhook endpoint for AI service - GET for testing, POST for data
+app.get('/webhook/ai', (req, res) => {
+  res.json({ 
+    status: 'webhook_active',
+    message: 'Canadian Tire AI Agent webhook is active and ready to receive data',
+    timestamp: new Date().toISOString(),
+    endpoint: '/webhook/ai',
+    method: 'POST'
+  });
+});
+
 app.post('/webhook/ai', async (req, res) => {
   try {
     console.log('📞 Webhook received!');
