@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Canadian Tire AI Agent - Demo</title>
+    <title>Canadian Tire Service - AI Agent Demo</title>
     <style>
         * {
             margin: 0;
@@ -13,55 +13,73 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            background: #F5F5F5;
+            color: #333333;
+            line-height: 1.6;
         }
 
-        .container {
+        /* Canadian Tire Header */
+        .ct-header {
+            background: #E31837;
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(227, 24, 55, 0.3);
+        }
+
+        .ct-header-content {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
-            padding: 30px;
             text-align: center;
+            padding: 0 20px;
         }
 
-        .header h1 {
-            font-size: 2.5em;
+        .ct-logo {
+            font-size: 3rem;
             margin-bottom: 10px;
         }
 
-        .header p {
-            font-size: 1.2em;
+        .ct-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .ct-subtitle {
+            font-size: 1.2rem;
             opacity: 0.9;
+            font-weight: 300;
         }
 
-        .content {
-            padding: 30px;
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
         }
 
-        .section {
-            margin-bottom: 40px;
-            padding: 25px;
-            border: 1px solid #e1e8ed;
-            border-radius: 10px;
-            background: #f8f9fa;
+        /* Demo Section */
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #E5E5E5;
         }
 
-        .section h2 {
-            color: #2c3e50;
+        .demo-section h2 {
+            color: #E31837;
             margin-bottom: 20px;
-            font-size: 1.8em;
+            font-size: 1.8rem;
         }
 
+        .demo-section p {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        /* Form Styling */
         .form-group {
             margin-bottom: 20px;
         }
@@ -70,21 +88,22 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #34495e;
+            color: #333;
         }
 
         .form-group input, .form-group select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
+            padding: 12px 16px;
+            border: 2px solid #E5E5E5;
             border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
         }
 
         .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: #e74c3c;
+            border-color: #E31837;
+            box-shadow: 0 0 0 3px rgba(227, 24, 55, 0.1);
         }
 
         .form-row {
@@ -93,411 +112,379 @@
             gap: 20px;
         }
 
+        /* Button Styling */
         .btn {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            background: #E31837;
             color: white;
             border: none;
             padding: 15px 30px;
             border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(227, 24, 55, 0.3);
         }
 
         .btn:hover {
+            background: #C41230;
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(227, 24, 55, 0.4);
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+        .btn-secondary {
+            background: #6C757D;
         }
 
-        .result {
+        .btn-secondary:hover {
+            background: #5A6268;
+        }
+
+        .btn-success {
+            background: #28A745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        /* Results Section */
+        .results {
+            background: #F8F9FA;
+            border-radius: 8px;
+            padding: 20px;
             margin-top: 20px;
-            padding: 20px;
-            background: #e8f5e8;
-            border: 1px solid #4caf50;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            max-height: 400px;
-            overflow-y: auto;
+            border: 1px solid #E5E5E5;
         }
 
-        .error {
-            background: #ffebee;
-            border-color: #f44336;
-            color: #c62828;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #e74c3c;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .info-box {
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-        .info-box h3 {
-            color: #1976d2;
+        .results h3 {
+            color: #E31837;
             margin-bottom: 15px;
         }
 
-        .info-box ul {
-            margin-left: 20px;
+        .result-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #E31837;
         }
 
-        .info-box li {
-            margin-bottom: 8px;
-            color: #424242;
+        .result-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            color: #666;
+        }
+
+        /* Status Messages */
+        .status {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #D4EDDA;
+            color: #155724;
+            border: 1px solid #C3E6CB;
+        }
+
+        .status.error {
+            background: #F8D7DA;
+            color: #721C24;
+            border: 1px solid #F5C6CB;
+        }
+
+        .status.info {
+            background: #D1ECF1;
+            color: #0C5460;
+            border: 1px solid #BEE5EB;
+        }
+
+        /* Service Type Badges */
+        .service-badge {
+            background: #E31837;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin: 5px 5px 5px 0;
+        }
+
+        /* About Section */
+        .about-section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #E5E5E5;
+        }
+
+        .about-section h2 {
+            color: #E31837;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .about-section p {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .feature-list li:before {
+            content: "✅ ";
+            color: #28A745;
+            margin-right: 10px;
+        }
+
+        /* Dashboard Link */
+        .dashboard-link {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .dashboard-link a {
+            display: inline-block;
+            background: #0066CC;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+        }
+
+        .dashboard-link a:hover {
+            background: #0056B3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .demo-section, .about-section {
+                padding: 25px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🚗 Canadian Tire AI Agent</h1>
-            <p>Intelligent Customer Service & Appointment Booking System</p>
+    <!-- Canadian Tire Header -->
+    <div class="ct-header">
+        <div class="ct-header-content">
+            <div class="ct-logo">🚗</div>
+            <div class="ct-title">Canadian Tire Service</div>
+            <div class="ct-subtitle">AI Customer Service Agent Demo</div>
         </div>
+    </div>
 
-        <div class="content">
-            <div class="info-box">
-                <h3>📋 About This Demo</h3>
-                <p>This is a demonstration of the Canadian Tire AI Customer Service Agent. The system can:</p>
-                <ul>
-                    <li>Check appointment availability for different service types</li>
-                    <li>Book appointments with full customer information collection</li>
-                    <li>Manage scheduling with 45-minute service + 15-minute wrap-up periods</li>
-                    <li>Handle Oil Changes, Tire Rotations, and General Service</li>
-                    <li>Provide roadside assistance reminders</li>
-                </ul>
-            </div>
-
-            <div class="section">
-                <h2>🔍 Check Availability</h2>
-                <form id="availabilityForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="checkDate">Date:</label>
-                            <input type="date" id="checkDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="checkLocation">Location:</label>
-                            <input type="text" id="checkLocation" placeholder="e.g., Toronto Downtown" required>
-                        </div>
+    <div class="container">
+        <div class="demo-section">
+            <h2>🔧 Book Your Service Appointment</h2>
+            <p>This demo shows how our AI agent collects customer information and books service appointments. Try it out below!</p>
+            
+            <form id="appointmentForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" name="name" required placeholder="Enter your full name">
                     </div>
                     <div class="form-group">
-                        <label for="checkServiceType">Service Type:</label>
-                        <select id="checkServiceType" required>
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" required placeholder="Enter your phone number">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter your email address">
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Preferred Location *</label>
+                        <input type="text" id="location" name="location" required placeholder="e.g., Waterloo, Ontario">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="carMake">Car Make *</label>
+                        <input type="text" id="carMake" name="carMake" required placeholder="e.g., Toyota, Ford, Honda">
+                    </div>
+                    <div class="form-group">
+                        <label for="carModel">Car Model *</label>
+                        <input type="text" id="carModel" name="carModel" required placeholder="e.g., Camry, F-150, Civic">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="carYear">Car Year *</label>
+                        <input type="number" id="carYear" name="carYear" required min="1990" max="2025" placeholder="e.g., 2020">
+                    </div>
+                    <div class="form-group">
+                        <label for="serviceType">Service Type *</label>
+                        <select id="serviceType" name="serviceType" required>
                             <option value="">Select a service</option>
-                            <option value="oil_change">Oil Change</option>
-                            <option value="tire_rotation">Seasonal Tire Rotation</option>
-                            <option value="general_service">General Check-up/Repair</option>
+                            <option value="Oil Change">Oil Change</option>
+                            <option value="Seasonal Tire Rotation">Seasonal Tire Rotation</option>
+                            <option value="General Check-up/Repair">General Check-up/Repair</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn">Check Availability</button>
-                </form>
-                <div id="availabilityResult"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="triangleMember">Triangle Rewards Member?</label>
+                    <select id="triangleMember" name="triangleMember">
+                        <option value="">Select membership status</option>
+                        <option value="true">Yes, I'm a member</option>
+                        <option value="false">No, I'm not a member</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="preferredDate">Preferred Date</label>
+                    <input type="text" id="preferredDate" name="preferredDate" placeholder="e.g., Friday, August 16th">
+                </div>
+                
+                <div class="form-group">
+                    <label for="preferredTime">Preferred Time</label>
+                    <input type="text" id="preferredTime" name="preferredTime" placeholder="e.g., 10:00 AM">
+                </div>
+                
+                <button type="submit" class="btn">📅 Check Availability & Book</button>
+                <button type="button" class="btn btn-secondary" onclick="clearForm()">🗑️ Clear Form</button>
+            </form>
+            
+            <div id="results" class="results" style="display: none;">
+                <h3>📋 Form Data Collected</h3>
+                <div id="resultsContent"></div>
             </div>
+        </div>
 
-            <div class="section">
-                <h2>📅 Book Appointment</h2>
-                <form id="bookingForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="location">Location:</label>
-                            <input type="text" id="location" placeholder="e.g., Toronto Downtown" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="fullName">Full Name:</label>
-                            <input type="text" id="fullName" placeholder="John Doe" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="phoneNumber">Phone Number:</label>
-                            <input type="tel" id="phoneNumber" placeholder="416-555-0123" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email:</label>
-                            <input type="email" id="email" placeholder="john.doe@email.com" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="carMake">Car Make:</label>
-                            <input type="text" id="carMake" placeholder="Toyota" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="carModel">Car Model:</label>
-                            <input type="text" id="carModel" placeholder="Camry" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="carYear">Car Year:</label>
-                            <input type="number" id="carYear" placeholder="2020" min="1990" max="2025" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="serviceType">Service Type:</label>
-                            <select id="serviceType" required>
-                                <option value="">Select a service</option>
-                                <option value="oil_change">Oil Change</option>
-                                <option value="tire_rotation">Seasonal Tire Rotation</option>
-                                <option value="general_service">General Check-up/Repair</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="date">Appointment Date:</label>
-                            <input type="date" id="date" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="time">Appointment Time:</label>
-                            <select id="time" required>
-                                <option value="">Select time</option>
-                                <option value="08:00">8:00 AM</option>
-                                <option value="09:00">9:00 AM</option>
-                                <option value="10:00">10:00 AM</option>
-                                <option value="11:00">11:00 AM</option>
-                                <option value="12:00">12:00 PM</option>
-                                <option value="13:00">1:00 PM</option>
-                                <option value="14:00">2:00 PM</option>
-                                <option value="15:00">3:00 PM</option>
-                                <option value="16:00">4:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="loyaltyMember"> Are you a member of the Canadian Tire loyalty program?
-                        </label>
-                    </div>
-                    <button type="submit" class="btn">Book Appointment</button>
-                </form>
-                <div id="bookingResult"></div>
-            </div>
-
-            <div class="section">
-                <h2>📊 View Appointments</h2>
-                <form id="viewForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="viewDate">Date (optional):</label>
-                            <input type="date" id="viewDate">
-                        </div>
-                        <div class="form-group">
-                            <label for="viewLocation">Location (optional):</label>
-                            <input type="text" id="viewLocation" placeholder="e.g., Toronto Downtown">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn">View Appointments</button>
-                </form>
-                <div id="viewResult"></div>
-            </div>
-
-            <div class="section">
-                <h2>📈 Statistics</h2>
-                <form id="statsForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="statsDate">Date:</label>
-                            <input type="date" id="statsDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="statsLocation">Location:</label>
-                            <input type="text" id="statsLocation" placeholder="e.g., Toronto Downtown" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn">Get Statistics</button>
-                </form>
-                <div id="statsResult"></div>
+        <div class="about-section">
+            <h2>ℹ️ About This Demo</h2>
+            <p>This is a demonstration of the Canadian Tire AI Customer Service Agent. Our AI agent can:</p>
+            
+            <ul class="feature-list">
+                <li>Collect all required customer information during phone calls</li>
+                <li>Search for available appointment times</li>
+                <li>Book appointments for oil changes, tire rotations, and general service</li>
+                <li>Provide real-time availability updates</li>
+                <li>Handle multiple customer requests simultaneously</li>
+                <li>Integrate with your existing service department systems</li>
+            </ul>
+            
+            <p><strong>Service Hours:</strong> Monday to Friday, 8:00 AM - 5:00 PM (Last appointment at 4:00 PM)</p>
+            <p><strong>Appointment Duration:</strong> 45 minutes service + 15 minutes wrap-up = 1 hour total</p>
+            
+            <div class="dashboard-link">
+                <a href="/dashboard">📊 View Live Dashboard</a>
             </div>
         </div>
     </div>
 
     <script>
-        // Set default dates
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+        const API_BASE = window.location.origin;
+
+        document.getElementById('appointmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            const dateInputs = document.querySelectorAll('input[type="date"]');
-            dateInputs.forEach(input => {
-                input.value = tomorrow.toISOString().split('T')[0];
-            });
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Show results
+            displayResults(data);
+            
+            // Simulate API call
+            try {
+                const response = await fetch(`${API_BASE}/api/appointments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                console.log('Appointment created:', result);
+                
+                showStatus('Appointment request submitted successfully! Check the dashboard for real-time updates.', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('Error submitting appointment. Please try again.', 'error');
+            }
         });
 
-        // API base URL
-        const API_BASE = 'http://localhost:3001';
-
-        // Utility functions
-        function showLoading(elementId) {
-            document.getElementById(elementId).innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Processing...</p>
-                </div>
-            `;
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            let html = '';
+            for (const [key, value] of Object.entries(data)) {
+                if (value) {
+                    const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    html += `
+                        <div class="result-item">
+                            <div class="result-label">${displayKey}:</div>
+                            <div class="result-value">${value}</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            resultsContent.innerHTML = html;
+            resultsDiv.style.display = 'block';
         }
 
-        function showResult(elementId, data, isError = false) {
-            const element = document.getElementById(elementId);
-            element.innerHTML = `
-                <div class="result ${isError ? 'error' : ''}">
-                    ${JSON.stringify(data, null, 2)}
-                </div>
-            `;
+        function clearForm() {
+            document.getElementById('appointmentForm').reset();
+            document.getElementById('results').style.display = 'none';
+            clearStatus();
         }
 
-        // Check Availability
-        document.getElementById('availabilityForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                date: document.getElementById('checkDate').value,
-                location: document.getElementById('checkLocation').value,
-                serviceType: document.getElementById('checkServiceType').value
-            };
+        function showStatus(message, type) {
+            clearStatus();
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            document.querySelector('.demo-section').appendChild(statusDiv);
+        }
 
-            showLoading('availabilityResult');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/check-availability`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showResult('availabilityResult', result);
-                } else {
-                    showResult('availabilityResult', result, true);
-                }
-            } catch (error) {
-                showResult('availabilityResult', { error: error.message }, true);
-            }
-        });
-
-        // Book Appointment
-        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                location: document.getElementById('location').value,
-                fullName: document.getElementById('fullName').value,
-                phoneNumber: document.getElementById('phoneNumber').value,
-                email: document.getElementById('email').value,
-                carMake: document.getElementById('carMake').value,
-                carModel: document.getElementById('carModel').value,
-                carYear: document.getElementById('carYear').value,
-                serviceType: document.getElementById('serviceType').value,
-                loyaltyMember: document.getElementById('loyaltyMember').checked,
-                date: document.getElementById('date').value,
-                time: document.getElementById('time').value
-            };
-
-            showLoading('bookingResult');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/book-appointment`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showResult('bookingResult', result);
-                } else {
-                    showResult('bookingResult', result, true);
-                }
-            } catch (error) {
-                showResult('bookingResult', { error: error.message }, true);
-            }
-        });
-
-        // View Appointments
-        document.getElementById('viewForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const params = new URLSearchParams();
-            if (document.getElementById('viewDate').value) {
-                params.append('date', document.getElementById('viewDate').value);
-            }
-            if (document.getElementById('viewLocation').value) {
-                params.append('location', document.getElementById('viewLocation').value);
-            }
-
-            showLoading('viewResult');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/appointments?${params}`);
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showResult('viewResult', result);
-                } else {
-                    showResult('viewResult', result, true);
-                }
-            } catch (error) {
-                showResult('viewResult', { error: error.message }, true);
-            }
-        });
-
-        // Get Statistics
-        document.getElementById('statsForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const params = new URLSearchParams({
-                date: document.getElementById('statsDate').value,
-                location: document.getElementById('statsLocation').value
-            });
-
-            showLoading('statsResult');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/statistics?${params}`);
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showResult('statsResult', result);
-                } else {
-                    showResult('statsResult', result, true);
-                }
-            } catch (error) {
-                showResult('statsResult', { error: error.message }, true);
-            }
-        });
+        function clearStatus() {
+            const statusDivs = document.querySelectorAll('.status');
+            statusDivs.forEach(div => div.remove());
+        }
     </script>
 </body>
 </html>
