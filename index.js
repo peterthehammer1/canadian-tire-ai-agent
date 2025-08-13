@@ -14,6 +14,11 @@ const callSessionManager = new CallSessionManager();
 app.use(express.json());
 app.use(express.static('public'));
 
+// Root route - serve the demo interface
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
 // Initialize the AI agent
 async function initializeAgent() {
   try {
