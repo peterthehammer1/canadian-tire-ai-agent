@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canadian Tire AI Agent - Data Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .dashboard-tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px 15px 0 0;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 0 0 15px 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .session-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .session-id {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .session-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-ended {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-expired {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .customer-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .info-value.null {
+            color: #999;
+            font-style: italic;
+        }
+
+        .conversation-preview {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .conversation-preview h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .transcript-item {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .transcript-timestamp {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .transcript-content {
+            color: #333;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .appointment-badge {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .extracted-data {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #bbdefb;
+            margin-top: 15px;
+        }
+
+        .extracted-data h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .data-item {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #bbdefb;
+        }
+
+        .data-label {
+            font-size: 0.8rem;
+            color: #1976d2;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .data-value {
+            font-weight: 500;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Canadian Tire AI Agent</h1>
+            <p>Real-time Call Data & Customer Information Dashboard</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-calls">-</div>
+                <div class="stat-label">Total Calls</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="active-calls">-</div>
+                <div class="stat-label">Active Calls</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="appointments-booked">-</div>
+                <div class="stat-label">Appointments Booked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="data-completion">-</div>
+                <div class="stat-label">Data Completion %</div>
+            </div>
+        </div>
+
+        <button class="refresh-btn" onclick="refreshData()">🔄 Refresh Data</button>
+
+        <div class="dashboard-tabs">
+            <button class="tab active" onclick="showTab('sessions')">📞 Call Sessions</button>
+            <button class="tab" onclick="showTab('customers')">👥 Customer Data</button>
+            <button class="tab" onclick="showTab('appointments')">📅 Appointments</button>
+            <button class="tab" onclick="showTab('analytics')">📊 Analytics</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- Call Sessions Tab -->
+            <div id="sessions" class="tab-pane active">
+                <div id="sessions-content">
+                    <div class="loading">Loading call sessions...</div>
+                </div>
+            </div>
+
+            <!-- Customer Data Tab -->
+            <div id="customers" class="tab-pane">
+                <div id="customers-content">
+                    <div class="loading">Loading customer data...</div>
+                </div>
+            </div>
+
+            <!-- Appointments Tab -->
+            <div id="appointments" class="tab-pane">
+                <div id="appointments-content">
+                    <div class="loading">Loading appointments...</div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics" class="tab-pane">
+                <div id="analytics-content">
+                    <div class="loading">Loading analytics...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentData = null;
+
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tab panes
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab pane
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Load tab-specific content
+            loadTabContent(tabName);
+        }
+
+        // Load content for specific tabs
+        function loadTabContent(tabName) {
+            switch(tabName) {
+                case 'sessions':
+                    displaySessions();
+                    break;
+                case 'customers':
+                    displayCustomers();
+                    break;
+                case 'appointments':
+                    displayAppointments();
+                    break;
+                case 'analytics':
+                    displayAnalytics();
+                    break;
+            }
+        }
+
+        // Refresh all data
+        async function refreshData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/call/sessions`);
+                const data = await response.json();
+                currentData = data.sessions || [];
+                
+                updateStats();
+                displaySessions();
+                
+                console.log('Data refreshed:', currentData);
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                document.getElementById('sessions-content').innerHTML = 
+                    '<div class="no-data">Error loading data. Please try again.</div>';
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            if (!currentData) return;
+            
+            const totalCalls = currentData.length;
+            const activeCalls = currentData.filter(s => s.status === 'active').length;
+            const appointmentsBooked = currentData.filter(s => s.appointmentBooked).length;
+            
+            // Calculate data completion percentage
+            let totalFields = 0;
+            let completedFields = 0;
+            
+            currentData.forEach(session => {
+                const customerInfo = session.customerInfo;
+                Object.values(customerInfo).forEach(value => {
+                    totalFields++;
+                    if (value !== null && value !== undefined && value !== '') {
+                        completedFields++;
+                    }
+                });
+            });
+            
+            const dataCompletion = totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
+            
+            document.getElementById('total-calls').textContent = totalCalls;
+            document.getElementById('active-calls').textContent = activeCalls;
+            document.getElementById('appointments-booked').textContent = appointmentsBooked;
+            document.getElementById('data-completion').textContent = dataCompletion + '%';
+        }
+
+        // Display call sessions
+        function displaySessions() {
+            if (!currentData || currentData.length === 0) {
+                document.getElementById('sessions-content').innerHTML = 
+                    '<div class="no-data">No call sessions found. Make a call to your Retell AI agent to see data here.</div>';
+                return;
+            }
+
+            const sessionsHtml = currentData.map(session => {
+                const statusClass = `status-${session.status}`;
+                const appointmentBadge = session.appointmentBooked ? 
+                    '<span class="appointment-badge">✅ Booked</span>' : '';
+                
+                const customerInfoHtml = Object.entries(session.customerInfo).map(([key, value]) => {
+                    const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    const displayValue = value || 'Not provided';
+                    const valueClass = value ? '' : 'null';
+                    
+                    return `
+                        <div class="info-item">
+                            <div class="info-label">${displayKey}</div>
+                            <div class="info-value ${valueClass}">${displayValue}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                const extractedDataHtml = session.extractedData && Object.keys(session.extractedData).length > 0 ? `
+                    <div class="extracted-data">
+                        <h4>🤖 AI Extracted Data</h4>
+                        <div class="data-grid">
+                            ${Object.entries(session.extractedData).map(([key, value]) => {
+                                if (!value) return '';
+                                const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                return `
+                                    <div class="data-item">
+                                        <div class="data-label">${displayKey}</div>
+                                        <div class="data-value">${value}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div>
+                                <div class="session-id">Call ID: ${session.callId}</div>
+                                <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+                                    Started: ${new Date(session.startTime).toLocaleString()}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="session-status ${statusClass}">${session.status.toUpperCase()}</div>
+                                ${appointmentBadge}
+                            </div>
+                        </div>
+                        
+                        <div class="customer-info">
+                            ${customerInfoHtml}
+                        </div>
+                        
+                        ${extractedDataHtml}
+                        
+                        <div class="conversation-preview">
+                            <h4>💬 Conversation History (${session.conversationLength} entries)</h4>
+                            ${session.conversationHistory && session.conversationHistory.length > 0 ? 
+                                session.conversationHistory.slice(-3).map(entry => `
+                                    <div class="transcript-item">
+                                        <div class="transcript-timestamp">${new Date(entry.timestamp).toLocaleTimeString()}</div>
+                                        <div class="transcript-content">${entry.content}</div>
+                                    </div>
+                                `).join('') : 
+                                '<div style="color: #999; font-style: italic;">No conversation history available</div>'
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('sessions-content').innerHTML = sessionsHtml;
+        }
+
+        // Display customer data summary
+        function displayCustomers() {
+            if (!currentData || currentData.length === 0) {
+                document.getElementById('customers-content').innerHTML = 
+                    '<div class="no-data">No customer data available.</div>';
+                return;
+            }
+
+            // Group customers by unique phone numbers
+            const customers = {};
+            currentData.forEach(session => {
+                const phone = session.customerInfo.phone;
+                if (phone && !customers[phone]) {
+                    customers[phone] = {
+                        phone,
+                        name: session.customerInfo.name,
+                        email: session.customerInfo.email,
+                        carMake: session.customerInfo.carMake,
+                        carModel: session.customerInfo.carModel,
+                        carYear: session.customerInfo.carYear,
+                        triangleMember: session.customerInfo.triangleMember,
+                        location: session.customerInfo.location,
+                        calls: 0,
+                        appointmentsBooked: 0
+                    };
+                }
+                if (phone) {
+                    customers[phone].calls++;
+                    if (session.appointmentBooked) {
+                        customers[phone].appointmentsBooked++;
+                    }
+                }
+            });
+
+            const customersHtml = Object.values(customers).map(customer => `
+                <div class="session-card">
+                    <div class="session-header">
+                        <div>
+                            <div class="session-id">${customer.name || 'Unknown Name'}</div>
+                            <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+                                Phone: ${customer.phone}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.9rem; color: #666;">
+                                ${customer.calls} call(s) | ${customer.appointmentsBooked} appointment(s)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="customer-info">
+                        <div class="info-item">
+                            <div class="info-label">Email</div>
+                            <div class="info-value ${customer.email ? '' : 'null'}">${customer.email || 'Not provided'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Vehicle</div>
+                            <div class="info-value">${customer.carYear || ''} ${customer.carMake || ''} ${customer.carModel || ''}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Triangle Member</div>
+                            <div class="info-value">${customer.triangleMember ? 'Yes' : 'No'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Preferred Location</div>
+                            <div class="info-value ${customer.location ? '' : 'null'}">${customer.location || 'Not specified'}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('customers-content').innerHTML = customersHtml;
+        }
+
+        // Display appointments
+        function displayAppointments() {
+            if (!currentData || currentData.length === 0) {
+                document.getElementById('appointments-content').innerHTML = 
+                    '<div class="no-data">No appointments found.</div>';
+                return;
+            }
+
+            const appointments = currentData.filter(session => session.appointmentBooked);
+            
+            if (appointments.length === 0) {
+                document.getElementById('appointments-content').innerHTML = 
+                    '<div class="no-data">No appointments have been booked yet. Complete calls with your Retell AI agent to see appointments here.</div>';
+                return;
+            }
+
+            const appointmentsHtml = appointments.map(session => `
+                <div class="session-card">
+                    <div class="session-header">
+                        <div>
+                            <div class="session-id">Appointment for ${session.customerInfo.name || 'Unknown Customer'}</div>
+                            <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+                                Booked on: ${new Date(session.lastActivity).toLocaleString()}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="appointment-badge">✅ Confirmed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="customer-info">
+                        <div class="info-item">
+                            <div class="info-label">Service Type</div>
+                            <div class="info-value">${session.customerInfo.serviceType || 'Not specified'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Location</div>
+                            <div class="info-value">${session.customerInfo.location || 'Not specified'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Preferred Date</div>
+                            <div class="info-value ${session.customerInfo.preferredDate ? '' : 'null'}">${session.customerInfo.preferredDate || 'Not specified'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Preferred Time</div>
+                            <div class="info-value ${session.customerInfo.preferredTime ? '' : 'null'}">${session.customerInfo.preferredTime || 'Not specified'}</div>
+                        </div>
+                    </div>
+                    
+                    ${session.appointmentDetails ? `
+                        <div class="extracted-data">
+                            <h4>📅 Appointment Details</h4>
+                            <pre style="background: white; padding: 15px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(session.appointmentDetails, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            document.getElementById('appointments-content').innerHTML = appointmentsHtml;
+        }
+
+        // Display analytics
+        function displayAnalytics() {
+            if (!currentData || currentData.length === 0) {
+                document.getElementById('analytics-content').innerHTML = 
+                    '<div class="no-data">No data available for analytics.</div>';
+                return;
+            }
+
+            // Calculate analytics
+            const totalCalls = currentData.length;
+            const activeCalls = currentData.filter(s => s.status === 'active').length;
+            const completedCalls = currentData.filter(s => s.status === 'ended').length;
+            const appointmentsBooked = currentData.filter(s => s.appointmentBooked).length;
+            
+            // Service type distribution
+            const serviceTypes = {};
+            currentData.forEach(session => {
+                const serviceType = session.customerInfo.serviceType;
+                if (serviceType) {
+                    serviceTypes[serviceType] = (serviceTypes[serviceType] || 0) + 1;
+                }
+            });
+
+            // Location distribution
+            const locations = {};
+            currentData.forEach(session => {
+                const location = session.customerInfo.location;
+                if (location) {
+                    locations[location] = (locations[location] || 0) + 1;
+                }
+            });
+
+            // Car make distribution
+            const carMakes = {};
+            currentData.forEach(session => {
+                const carMake = session.customerInfo.carMake;
+                if (carMake) {
+                    carMakes[carMake] = (carMakes[carMake] || 0) + 1;
+                }
+            });
+
+            const analyticsHtml = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div class="session-card">
+                        <h3 style="margin-bottom: 15px; color: #333;">📊 Call Statistics</h3>
+                        <div style="font-size: 1.1rem; line-height: 1.8;">
+                            <div><strong>Total Calls:</strong> ${totalCalls}</div>
+                            <div><strong>Active Calls:</strong> ${activeCalls}</div>
+                            <div><strong>Completed Calls:</strong> ${completedCalls}</div>
+                            <div><strong>Appointments Booked:</strong> ${appointmentsBooked}</div>
+                            <div><strong>Success Rate:</strong> ${totalCalls > 0 ? Math.round((appointmentsBooked / totalCalls) * 100) : 0}%</div>
+                        </div>
+                    </div>
+
+                    <div class="session-card">
+                        <h3 style="margin-bottom: 15px; color: #333;">🔧 Service Types</h3>
+                        ${Object.keys(serviceTypes).length > 0 ? 
+                            Object.entries(serviceTypes).map(([service, count]) => `
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                                    <span>${service}</span>
+                                    <span style="font-weight: bold; color: #667eea;">${count}</span>
+                                </div>
+                            `).join('') : 
+                            '<div style="color: #999; font-style: italic;">No service types recorded</div>'
+                        }
+                    </div>
+
+                    <div class="session-card">
+                        <h3 style="margin-bottom: 15px; color: #333;">📍 Locations</h3>
+                        ${Object.keys(locations).length > 0 ? 
+                            Object.entries(locations).map(([location, count]) => `
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                                    <span>${location}</span>
+                                    <span style="font-weight: bold; color: #667eea;">${count}</span>
+                                </div>
+                            `).join('') : 
+                            '<div style="color: #999; font-style: italic;">No locations recorded</div>'
+                        }
+                    </div>
+
+                    <div class="session-card">
+                        <h3 style="margin-bottom: 15px; color: #333;">🚗 Car Makes</h3>
+                        ${Object.keys(carMakes).length > 0 ? 
+                            Object.entries(carMakes).map(([make, count]) => `
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                                    <span>${make}</span>
+                                    <span style="font-weight: bold; color: #667eea;">${count}</span>
+                                </div>
+                            `).join('') : 
+                            '<div style="color: #999; font-style: italic;">No car makes recorded</div>'
+                        }
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('analytics-content').innerHTML = analyticsHtml;
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshData, 30000);
+
+        // Initial load
+        refreshData();
+    </script>
+</body>
+</html>

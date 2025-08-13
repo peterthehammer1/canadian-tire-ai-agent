@@ -19,6 +19,11 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
+// Dashboard route - view all extracted data
+app.get('/dashboard', (req, res) => {
+  res.sendFile(__dirname + '/public/dashboard.html');
+});
+
 // Initialize the AI agent
 async function initializeAgent() {
   try {
@@ -349,11 +354,30 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('📝 Transcript received for call:', callId);
       console.log('💬 Content:', transcript);
       
-      // Here you would integrate with your AI service to:
-      // 1. Extract customer information from conversation
-      // 2. Update the call session
-      // 3. Trigger availability checks
-      // 4. Handle appointment booking
+      if (transcript && callId) {
+        // Extract customer data from transcript
+        const extractedData = callSessionManager.extractCustomerData(callId, transcript);
+        console.log('🎯 Extracted data:', extractedData);
+        
+        // Check if we have enough info to book an appointment
+        const session = callSessionManager.getSession(callId);
+        if (session) {
+          const customerInfo = session.customerInfo;
+          const hasRequiredInfo = customerInfo.name && customerInfo.phone && 
+                                 customerInfo.serviceType && customerInfo.location;
+          
+          if (hasRequiredInfo) {
+            console.log('✅ All required info collected, ready to book appointment');
+            // Here you would trigger the appointment booking flow
+          } else {
+            console.log('⏳ Still collecting info. Missing:', 
+              Object.entries(customerInfo)
+                .filter(([key, value]) => !value && ['name', 'phone', 'serviceType', 'location'].includes(key))
+                .map(([key]) => key)
+            );
+          }
+        }
+      }
     } else {
       console.log('❓ Unknown event type:', event_type);
       console.log('📋 Full payload:', JSON.stringify(req.body, null, 2));

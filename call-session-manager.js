@@ -1,291 +1,310 @@
-const moment = require('moment');
+const { v4: uuidv4 } = require('uuid');
 
 class CallSessionManager {
   constructor() {
-    this.activeSessions = new Map();
+    this.sessions = new Map();
     this.sessionTimeout = 30 * 60 * 1000; // 30 minutes
   }
 
-  // Create a new call session
   createSession(callId, customerPhone) {
     const session = {
       callId,
       customerPhone,
-      createdAt: new Date(),
+      sessionId: uuidv4(),
+      startTime: new Date(),
       lastActivity: new Date(),
+      status: 'active',
       customerInfo: {
-        location: null,
-        fullName: null,
-        phoneNumber: customerPhone,
+        name: null,
+        phone: customerPhone,
         email: null,
         carMake: null,
         carModel: null,
         carYear: null,
         serviceType: null,
-        loyaltyMember: null,
+        triangleMember: null,
+        location: null,
         preferredDate: null,
         preferredTime: null
       },
-      conversationState: 'greeting', // greeting, collecting_info, checking_availability, confirming_booking, completed
-      availableSlots: [],
-      selectedSlot: null,
-      appointmentId: null
+      conversationHistory: [],
+      extractedData: {},
+      appointmentBooked: false,
+      appointmentDetails: null
     };
 
-    this.activeSessions.set(callId, session);
-    console.log(`📞 New call session created: ${callId} for ${customerPhone}`);
+    this.sessions.set(callId, session);
+    console.log(`📞 New call session created: ${callId}`);
     return session;
   }
 
-  // Get session by call ID
-  getSession(callId) {
-    const session = this.activeSessions.get(callId);
+  updateCustomerInfo(callId, field, value) {
+    const session = this.sessions.get(callId);
     if (session) {
+      session.customerInfo[field] = value;
+      session.lastActivity = new Date();
+      console.log(`📝 Updated ${field}: ${value} for call ${callId}`);
+      return true;
+    }
+    return false;
+  }
+
+  addConversationEntry(callId, entry) {
+    const session = this.sessions.get(callId);
+    if (session) {
+      session.conversationHistory.push({
+        timestamp: new Date(),
+        ...entry
+      });
       session.lastActivity = new Date();
     }
-    return session;
   }
 
-  // Update customer information during the call
-  updateCustomerInfo(callId, updates) {
-    const session = this.getSession(callId);
-    if (!session) {
-      throw new Error('Call session not found');
-    }
+  extractCustomerData(callId, transcript) {
+    const session = this.sessions.get(callId);
+    if (!session) return false;
 
-    Object.assign(session.customerInfo, updates);
-    session.lastActivity = new Date();
-    
-    console.log(`📝 Updated customer info for call ${callId}:`, updates);
-    return session;
-  }
-
-  // Check appointment availability for a customer
-  async checkAvailability(callId, date, location, serviceType) {
-    const session = this.getSession(callId);
-    if (!session) {
-      throw new Error('Call session not found');
-    }
-
-    // Update session with availability request
-    session.customerInfo.preferredDate = date;
-    session.customerInfo.location = location;
-    session.customerInfo.serviceType = serviceType;
-    session.conversationState = 'checking_availability';
-
-    // Get available slots (this would integrate with your appointment manager)
-    const availableSlots = this.getAvailableSlotsForDate(date, location, serviceType);
-    session.availableSlots = availableSlots;
-    session.lastActivity = new Date();
-
-    console.log(`🔍 Availability checked for call ${callId}: ${availableSlots.length} slots available`);
-    return availableSlots;
-  }
-
-  // Get available slots for a specific date/location/service
-  getAvailableSlotsForDate(date, location, serviceType) {
-    // This would integrate with your AppointmentManager
-    // For now, returning mock data
-    const businessHours = [
-      '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'
-    ];
-    
-    // Simulate some slots being taken
-    const takenSlots = ['10:00', '14:00']; // Mock taken slots
-    const availableSlots = businessHours.filter(time => !takenSlots.includes(time));
-    
-    return availableSlots.map(time => ({
-      time,
-      displayTime: moment(`2000-01-01 ${time}`).format('h:mm A'),
-      available: true
-    }));
-  }
-
-  // Select a time slot for the customer
-  selectTimeSlot(callId, time) {
-    const session = this.getSession(callId);
-    if (!session) {
-      throw new Error('Call session not found');
-    }
-
-    const selectedSlot = session.availableSlots.find(slot => slot.time === time);
-    if (!selectedSlot) {
-      throw new Error('Selected time slot is not available');
-    }
-
-    session.selectedSlot = selectedSlot;
-    session.customerInfo.preferredTime = time;
-    session.conversationState = 'confirming_booking';
-    session.lastActivity = new Date();
-
-    console.log(`⏰ Time slot selected for call ${callId}: ${time}`);
-    return selectedSlot;
-  }
-
-  // Book the appointment
-  async bookAppointment(callId) {
-    const session = this.getSession(callId);
-    if (!session) {
-      throw new Error('Call session not found');
-    }
-
-    // Validate all required information is present
-    const requiredFields = [
-      'location', 'fullName', 'phoneNumber', 'email',
-      'carMake', 'carModel', 'carYear', 'serviceType',
-      'loyaltyMember', 'preferredDate', 'preferredTime'
-    ];
-
-    const missingFields = requiredFields.filter(field => !session.customerInfo[field]);
-    if (missingFields.length > 0) {
-      throw new Error(`Missing required information: ${missingFields.join(', ')}`);
-    }
-
-    // Create appointment data
-    const appointmentData = {
-      ...session.customerInfo,
-      date: session.customerInfo.preferredDate,
-      time: session.customerInfo.preferredTime,
-      status: 'confirmed'
-    };
-
-    // This would integrate with your AppointmentManager
-    const appointmentId = this.createMockAppointment(appointmentData);
-    
-    session.appointmentId = appointmentId;
-    session.conversationState = 'completed';
-    session.lastActivity = new Date();
-
-    console.log(`✅ Appointment booked for call ${callId}: ${appointmentId}`);
-    return {
-      appointmentId,
-      appointmentData,
-      confirmationNumber: appointmentId
-    };
-  }
-
-  // Mock appointment creation (replace with real AppointmentManager integration)
-  createMockAppointment(appointmentData) {
-    const appointmentId = `APT-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-    
-    // In production, this would call appointmentManager.bookAppointment(appointmentData)
-    console.log(`📅 Mock appointment created: ${appointmentId}`, appointmentData);
-    
-    return appointmentId;
-  }
-
-  // Get conversation state and next actions
-  getConversationState(callId) {
-    const session = this.getSession(callId);
-    if (!session) {
-      return { state: 'unknown', message: 'Call session not found' };
-    }
-
-    const stateInfo = {
-      greeting: {
-        state: 'greeting',
-        message: 'Welcome! I can help you book a service appointment.',
-        nextAction: 'Ask for service type and location',
-        requiredInfo: []
-      },
-      collecting_info: {
-        state: 'collecting_info',
-        message: 'I\'m collecting your information to book the appointment.',
-        nextAction: 'Continue gathering required information',
-        requiredInfo: this.getMissingRequiredInfo(session)
-      },
-      checking_availability: {
-        state: 'checking_availability',
-        message: 'I\'m checking available appointment times.',
-        nextAction: 'Present available time slots',
-        requiredInfo: [],
-        availableSlots: session.availableSlots
-      },
-      confirming_booking: {
-        state: 'confirming_booking',
-        message: 'I\'m ready to confirm your appointment.',
-        nextAction: 'Confirm details and book appointment',
-        requiredInfo: [],
-        selectedSlot: session.selectedSlot
-      },
-      completed: {
-        state: 'completed',
-        message: 'Your appointment has been booked successfully!',
-        nextAction: 'Provide confirmation details and end call',
-        requiredInfo: [],
-        appointmentId: session.appointmentId
-      }
-    };
-
-    return stateInfo[session.conversationState] || stateInfo.greeting;
-  }
-
-  // Get missing required information
-  getMissingRequiredInfo(session) {
-    const requiredFields = [
-      'location', 'fullName', 'phoneNumber', 'email',
-      'carMake', 'carModel', 'carYear', 'serviceType',
-      'loyaltyMember'
-    ];
-
-    return requiredFields.filter(field => !session.customerInfo[field]);
-  }
-
-  // End call session
-  endSession(callId) {
-    const session = this.activeSessions.get(callId);
-    if (session) {
-      console.log(`📞 Call session ended: ${callId}`);
-      this.activeSessions.delete(callId);
-    }
-  }
-
-  // Clean up expired sessions
-  cleanupExpiredSessions() {
-    const now = new Date();
-    const expiredSessions = [];
-
-    for (const [callId, session] of this.activeSessions.entries()) {
-      if (now - session.lastActivity > this.sessionTimeout) {
-        expiredSessions.push(callId);
-      }
-    }
-
-    expiredSessions.forEach(callId => {
-      console.log(`🧹 Cleaning up expired session: ${callId}`);
-      this.activeSessions.delete(callId);
+    // Add transcript to conversation history
+    this.addConversationEntry(callId, {
+      type: 'transcript',
+      content: transcript,
+      aiExtracted: false
     });
 
-    return expiredSessions.length;
+    // Use AI to extract structured data from transcript
+    const extractedData = this.parseTranscriptForData(transcript);
+    
+    // Update session with extracted data
+    Object.keys(extractedData).forEach(field => {
+      if (extractedData[field] && !session.customerInfo[field]) {
+        this.updateCustomerInfo(callId, field, extractedData[field]);
+      }
+    });
+
+    // Store raw extracted data
+    session.extractedData = { ...session.extractedData, ...extractedData };
+    
+    return extractedData;
   }
 
-  // Get session summary for debugging
-  getSessionSummary(callId) {
-    const session = this.getSession(callId);
-    if (!session) {
-      return null;
+  parseTranscriptForData(transcript) {
+    const extracted = {};
+    const lowerTranscript = transcript.toLowerCase();
+
+    // Extract name (look for patterns like "my name is", "I'm", "call me")
+    const namePatterns = [
+      /(?:my name is|i'm|call me|this is)\s+([a-zA-Z\s]+?)(?:\s|\.|$)/i,
+      /(?:name|called)\s*[:\-]?\s*([a-zA-Z\s]+?)(?:\s|\.|$)/i
+    ];
+    
+    for (const pattern of namePatterns) {
+      const match = transcript.match(pattern);
+      if (match && match[1]) {
+        extracted.name = match[1].trim();
+        break;
+      }
     }
+
+    // Extract email
+    const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+    const emailMatch = transcript.match(emailPattern);
+    if (emailMatch) {
+      extracted.email = emailMatch[0];
+    }
+
+    // Extract car make
+    const carMakes = ['toyota', 'honda', 'ford', 'chevrolet', 'nissan', 'bmw', 'mercedes', 'audi', 'volkswagen', 'hyundai', 'kia', 'mazda', 'subaru', 'lexus', 'acura', 'infiniti', 'cadillac', 'buick', 'chrysler', 'dodge', 'jeep', 'ram', 'gmc', 'pontiac', 'saturn', 'scion'];
+    for (const make of carMakes) {
+      if (lowerTranscript.includes(make)) {
+        extracted.carMake = make.charAt(0).toUpperCase() + make.slice(1);
+        break;
+      }
+    }
+
+    // Extract car model (look for patterns after car make)
+    if (extracted.carMake) {
+      const makeIndex = lowerTranscript.indexOf(extracted.carMake.toLowerCase());
+      if (makeIndex !== -1) {
+        const afterMake = transcript.substring(makeIndex + extracted.carMake.length).trim();
+        const modelMatch = afterMake.match(/^([a-zA-Z0-9\s]+?)(?:\s|\.|$)/);
+        if (modelMatch) {
+          extracted.carModel = modelMatch[1].trim();
+        }
+      }
+    }
+
+    // Extract car year
+    const yearPattern = /(?:19|20)\d{2}/;
+    const yearMatch = transcript.match(yearPattern);
+    if (yearMatch) {
+      extracted.carYear = parseInt(yearMatch[0]);
+    }
+
+    // Extract service type
+    const serviceTypes = {
+      'oil change': 'Oil Change',
+      'tire rotation': 'Seasonal Tire Rotation',
+      'tire': 'Seasonal Tire Rotation',
+      'general check': 'General Check-up/Repair',
+      'check up': 'General Check-up/Repair',
+      'repair': 'General Check-up/Repair',
+      'maintenance': 'General Check-up/Repair'
+    };
+    
+    for (const [key, value] of Object.entries(serviceTypes)) {
+      if (lowerTranscript.includes(key)) {
+        extracted.serviceType = value;
+        break;
+      }
+    }
+
+    // Extract triangle membership
+    if (lowerTranscript.includes('triangle member') || lowerTranscript.includes('loyalty program')) {
+      extracted.triangleMember = lowerTranscript.includes('yes') || lowerTranscript.includes('member');
+    }
+
+    // Extract location
+    const locationPatterns = [
+      /(?:location|store|branch)\s*[:\-]?\s*([a-zA-Z\s]+?)(?:\s|\.|$)/i,
+      /(?:canadian tire|ct)\s+([a-zA-Z\s]+?)(?:\s|\.|$)/i
+    ];
+    
+    for (const pattern of locationPatterns) {
+      const match = transcript.match(pattern);
+      if (match && match[1]) {
+        extracted.location = match[1].trim();
+        break;
+      }
+    }
+
+    // Extract date preferences
+    const datePatterns = [
+      /(?:on|for|this|next)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
+      /(?:on|for)\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}/i,
+      /(?:on|for)\s+\d{1,2}\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i
+    ];
+    
+    for (const pattern of datePatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        extracted.preferredDate = match[0];
+        break;
+      }
+    }
+
+    // Extract time preferences
+    const timePatterns = [
+      /(?:at|around|about)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i,
+      /(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i
+    ];
+    
+    for (const pattern of timePatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        extracted.preferredTime = match[1] || match[0];
+        break;
+      }
+    }
+
+    return extracted;
+  }
+
+  bookAppointment(callId, appointmentData) {
+    const session = this.sessions.get(callId);
+    if (session) {
+      session.appointmentBooked = true;
+      session.appointmentDetails = appointmentData;
+      session.lastActivity = new Date();
+      console.log(`✅ Appointment booked for call ${callId}:`, appointmentData);
+      return true;
+    }
+    return false;
+  }
+
+  getSession(callId) {
+    return this.sessions.get(callId);
+  }
+
+  getAllActiveSessions() {
+    const activeSessions = [];
+    for (const [callId, session] of this.sessions) {
+      if (session.status === 'active') {
+        activeSessions.push({
+          callId,
+          sessionId: session.sessionId,
+          startTime: session.startTime,
+          lastActivity: session.lastActivity,
+          customerInfo: session.customerInfo,
+          appointmentBooked: session.appointmentBooked,
+          appointmentDetails: session.appointmentDetails,
+          conversationLength: session.conversationHistory.length
+        });
+      }
+    }
+    return activeSessions;
+  }
+
+  getAllSessions() {
+    const allSessions = [];
+    for (const [callId, session] of this.sessions) {
+      allSessions.push({
+        callId,
+        sessionId: session.sessionId,
+        startTime: session.startTime,
+        lastActivity: session.lastActivity,
+        status: session.status,
+        customerInfo: session.customerInfo,
+        appointmentBooked: session.appointmentBooked,
+        appointmentDetails: session.appointmentDetails,
+        conversationLength: session.conversationHistory.length,
+        extractedData: session.extractedData
+      });
+    }
+    return allSessions;
+  }
+
+  getSessionData(callId) {
+    const session = this.sessions.get(callId);
+    if (!session) return null;
 
     return {
       callId: session.callId,
-      customerPhone: session.customerPhone,
-      conversationState: session.conversationState,
-      customerInfo: session.customerInfo,
-      availableSlots: session.availableSlots,
-      selectedSlot: session.selectedSlot,
-      appointmentId: session.appointmentId,
+      sessionId: session.sessionId,
+      startTime: session.startTime,
       lastActivity: session.lastActivity,
-      sessionAge: Date.now() - session.createdAt.getTime()
+      status: session.status,
+      customerInfo: session.customerInfo,
+      appointmentBooked: session.appointmentBooked,
+      appointmentDetails: session.appointmentDetails,
+      conversationHistory: session.conversationHistory,
+      extractedData: session.extractedData
     };
   }
 
-  // Get all active sessions (for admin purposes)
-  getAllActiveSessions() {
-    const sessions = [];
-    for (const [callId, session] of this.activeSessions.entries()) {
-      sessions.push(this.getSessionSummary(callId));
+  endSession(callId) {
+    const session = this.sessions.get(callId);
+    if (session) {
+      session.status = 'ended';
+      session.endTime = new Date();
+      console.log(`📞 Call session ended: ${callId}`);
+      return true;
     }
-    return sessions;
+    return false;
+  }
+
+  cleanupExpiredSessions() {
+    const now = new Date();
+    let cleaned = 0;
+    
+    for (const [callId, session] of this.sessions) {
+      if (session.status === 'active' && 
+          (now - session.lastActivity) > this.sessionTimeout) {
+        session.status = 'expired';
+        cleaned++;
+      }
+    }
+    
+    return cleaned;
   }
 }
 
