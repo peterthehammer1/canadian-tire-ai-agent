@@ -378,6 +378,30 @@ app.post('/webhook/ai', async (req, res) => {
           }
         }
       }
+    } else if (event_type === 'function_call' || event_type === 'function') {
+      // Handle function calls from Retell AI
+      console.log('🔧 Function call received:', data.function_name);
+      console.log('📊 Function arguments:', data.arguments);
+      
+      const callId = data.call_id || data.callId || data.id || 'function-call-' + Date.now();
+      
+      // Create or get session for function calls
+      let session = callSessionManager.getSession(callId);
+      if (!session) {
+        session = callSessionManager.createSession(callId, data.arguments?.phone || 'unknown');
+      }
+      
+      // Update session with function data
+      if (data.arguments) {
+        Object.entries(data.arguments).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+            callSessionManager.updateCustomerInfo(callId, key, value);
+          }
+        });
+      }
+      
+      console.log('✅ Function data processed for call:', callId);
+      console.log('📝 Updated customer info:', session.customerInfo);
     } else {
       console.log('❓ Unknown event type:', event_type);
       console.log('📋 Full payload:', JSON.stringify(req.body, null, 2));
