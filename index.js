@@ -486,7 +486,6 @@ app.post('/webhook/ai', async (req, res) => {
       
       console.log('✅ Session created with data:', callId);
       console.log('📝 Customer info stored:', session.customerInfo);
-    }
     } else if (event_type === 'call_started' || event_type === 'start') {
       // Create a new call session
       const callId = data.call_id || data.callId || data.id;
