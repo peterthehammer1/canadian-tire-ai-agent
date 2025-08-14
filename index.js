@@ -471,18 +471,18 @@ app.post('/webhook/ai', async (req, res) => {
       const callId = 'retell-' + Date.now();
       const session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
       
-      // Store all the data using updateCustomerInfo method
-      if (req.body.name) callSessionManager.updateCustomerInfo(callId, 'name', req.body.name);
-      if (req.body.phone) callSessionManager.updateCustomerInfo(callId, 'phone', req.body.phone);
-      if (req.body.email) callSessionManager.updateCustomerInfo(callId, 'email', req.body.email);
-      if (req.body.carMake) callSessionManager.updateCustomerInfo(callId, 'carMake', req.body.carMake);
-      if (req.body.carModel) callSessionManager.updateCustomerInfo(callId, 'carModel', req.body.carModel);
-      if (req.body.carYear) callSessionManager.updateCustomerInfo(callId, 'carYear', req.body.carYear);
-      if (req.body.serviceType) callSessionManager.updateCustomerInfo(callId, 'serviceType', req.body.serviceType);
-      if (req.body.triangleMember !== undefined) callSessionManager.updateCustomerInfo(callId, 'triangleMember', req.body.triangleMember);
-      if (req.body.location) callSessionManager.updateCustomerInfo(callId, 'location', req.body.location);
-      if (req.body.preferredDate) callSessionManager.updateCustomerInfo(callId, 'preferredDate', req.body.preferredDate);
-      if (req.body.preferredTime) callSessionManager.updateCustomerInfo(callId, 'preferredTime', req.body.preferredTime);
+      // Store all the data directly in the session object
+      if (req.body.name) session.customerInfo.name = req.body.name;
+      if (req.body.phone) session.customerInfo.phone = req.body.phone;
+      if (req.body.email) session.customerInfo.email = req.body.email;
+      if (req.body.carMake) session.customerInfo.carMake = req.body.carMake;
+      if (req.body.carModel) session.customerInfo.carModel = req.body.carModel;
+      if (req.body.carYear) session.customerInfo.carYear = req.body.carYear;
+      if (req.body.serviceType) session.customerInfo.serviceType = req.body.serviceType;
+      if (req.body.triangleMember !== undefined) session.customerInfo.triangleMember = req.body.triangleMember;
+      if (req.body.location) session.customerInfo.location = req.body.location;
+      if (req.body.preferredDate) session.customerInfo.preferredDate = req.body.preferredDate;
+      if (req.body.preferredTime) session.customerInfo.preferredTime = req.body.preferredTime;
       
       console.log('✅ Session created with data:', callId);
       console.log('📝 Customer info stored:', session.customerInfo);
