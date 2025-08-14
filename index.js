@@ -659,6 +659,41 @@ app.get('/api/test/sessions', (req, res) => {
   }
 });
 
+// Simple endpoint to store customer data from Retell AI
+app.post('/api/store-customer-data', (req, res) => {
+  try {
+    console.log('🔧 Storing customer data:', JSON.stringify(req.body, null, 2));
+    
+    // Create a new session
+    const callId = 'customer-' + Date.now();
+    const session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
+    
+    // Store all the data using updateCustomerInfo method
+    if (req.body.name) callSessionManager.updateCustomerInfo(callId, 'name', req.body.name);
+    if (req.body.phone) callSessionManager.updateCustomerInfo(callId, 'phone', req.body.phone);
+    if (req.body.email) callSessionManager.updateCustomerInfo(callId, 'email', req.body.email);
+    if (req.body.carMake) callSessionManager.updateCustomerInfo(callId, 'carMake', req.body.carMake);
+    if (req.body.carModel) callSessionManager.updateCustomerInfo(callId, 'carModel', req.body.carModel);
+    if (req.body.carYear) callSessionManager.updateCustomerInfo(callId, 'carYear', req.body.carYear);
+    if (req.body.serviceType) callSessionManager.updateCustomerInfo(callId, 'serviceType', req.body.serviceType);
+    if (req.body.triangleMember !== undefined) callSessionManager.updateCustomerInfo(callId, 'triangleMember', req.body.triangleMember);
+    if (req.body.location) callSessionManager.updateCustomerInfo(callId, 'location', req.body.location);
+    if (req.body.preferredDate) callSessionManager.updateCustomerInfo(callId, 'preferredDate', req.body.preferredDate);
+    if (req.body.preferredTime) callSessionManager.updateCustomerInfo(callId, 'preferredTime', req.body.preferredTime);
+    
+    console.log('✅ Customer data stored successfully:', callId);
+    
+    res.json({ 
+      success: true, 
+      message: 'Customer data stored successfully',
+      sessionId: callId
+    });
+  } catch (error) {
+    console.error('❌ Error storing customer data:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Cleanup endpoint to remove duplicate sessions and consolidate data
 app.post('/api/cleanup-duplicates', (req, res) => {
   try {
