@@ -56,18 +56,46 @@ app.post('/api/webhook', (req, res) => {
 // Get all appointments
 app.get('/api/appointments', (req, res) => {
   try {
+    console.log('📊 GET /api/appointments - Returning', appointments.length, 'appointments');
     res.json({
       success: true,
       appointments: appointments,
-      count: appointments.length
+      count: appointments.length,
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
+    console.error('❌ Error in /api/appointments:', error);
     res.status(500).json({
       success: false,
       message: 'Error fetching appointments',
       error: error.message
     });
   }
+});
+
+// Test endpoint to verify server is running
+app.get('/api/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Server is running!',
+    timestamp: new Date().toISOString(),
+    appointments: appointments.length
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Canadian Tire Appointment System',
+    status: 'running',
+    endpoints: {
+      webhook: 'POST /api/webhook',
+      appointments: 'GET /api/appointments',
+      test: 'GET /api/test',
+      health: 'GET /health'
+    },
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Health check

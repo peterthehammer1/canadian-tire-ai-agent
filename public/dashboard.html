@@ -215,7 +215,16 @@
             try {
                 console.log('🔄 Loading appointments...');
                 
+                // Show loading state
+                document.getElementById('customerList').innerHTML = '<div class="loading">Loading customer data...</div>';
+                document.getElementById('calendarView').innerHTML = '<div class="loading">Loading calendar...</div>';
+                
                 const response = await fetch('/api/appointments');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 
                 if (data.success) {
@@ -228,7 +237,46 @@
                 
             } catch (error) {
                 console.error('❌ Error loading appointments:', error);
-                showError('Failed to load appointments: ' + error.message);
+                
+                // Show user-friendly error message
+                if (error.message.includes('404') || error.message.includes('Failed to fetch')) {
+                    document.getElementById('customerList').innerHTML = `
+                        <div class="no-data">
+                            <h3>🚧 System Starting Up</h3>
+                            <p>The appointment system is currently being deployed.</p>
+                            <p>Please wait a few minutes and try refreshing.</p>
+                            <p><small>Error: ${error.message}</small></p>
+                        </div>
+                    `;
+                    document.getElementById('calendarView').innerHTML = `
+                        <div class="no-data">
+                            <h3>🚧 System Starting Up</h3>
+                            <p>The appointment system is currently being deployed.</p>
+                            <p>Please wait a few minutes and try refreshing.</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('customerList').innerHTML = `
+                        <div class="no-data">
+                            <h3>❌ Error Loading Data</h3>
+                            <p>Failed to load appointments: ${error.message}</p>
+                            <p>Please try refreshing the page.</p>
+                        </div>
+                    `;
+                    document.getElementById('calendarView').innerHTML = `
+                        <div class="no-data">
+                            <h3>❌ Error Loading Data</h3>
+                            <p>Failed to load appointments: ${error.message}</p>
+                            <p>Please try refreshing the page.</p>
+                        </div>
+                    `;
+                }
+                
+                // Reset stats to show error state
+                document.getElementById('totalAppointments').textContent = '?';
+                document.getElementById('todayAppointments').textContent = '?';
+                document.getElementById('confirmedAppointments').textContent = '?';
+                document.getElementById('pendingAppointments').textContent = '?';
             }
         }
 
