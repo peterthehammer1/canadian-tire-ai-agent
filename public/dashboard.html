@@ -1355,7 +1355,28 @@
                 return;
             }
 
-            const sessionsHtml = currentData.map(session => {
+            // Filter for complete sessions only (with essential customer information)
+            const completeSessions = currentData.filter(session => {
+                const customerInfo = session.customerInfo;
+                const hasEssentialInfo = customerInfo.name && 
+                                       customerInfo.phone && 
+                                       customerInfo.email &&
+                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                
+                return hasEssentialInfo;
+            });
+
+            console.log('🔍 Total sessions:', currentData.length);
+            console.log('🔍 Complete sessions:', completeSessions.length);
+            console.log('🔍 Filtered out incomplete sessions:', currentData.length - completeSessions.length);
+
+            if (completeSessions.length === 0) {
+                document.getElementById('sessions-content').innerHTML = 
+                    '<div class="no-data">No complete call sessions found. Complete calls with your AI agent to see data here.</div>';
+                return;
+            }
+
+            const sessionsHtml = completeSessions.map(session => {
                 const statusClass = `status-${session.status}`;
                 const appointmentBadge = session.appointmentBooked ? 
                     '<span class="appointment-badge">✅ Booked</span>' : '';
@@ -1442,11 +1463,14 @@
                     </div>
                 ` : '<div class="conversation-preview"><h4>💬 Call Transcript</h4><div style="color: #999; font-style: italic;">No conversation history available</div></div>';
 
+                // Clean up call ID to remove any backend references
+                const cleanCallId = session.callId.replace(/retell-function-|retell-|function-/gi, 'Call-');
+
                 return `
                     <div class="session-card">
                         <div class="session-header">
                             <div>
-                                <div class="session-id">Call ID: ${session.callId}</div>
+                                <div class="session-id">Call ID: ${cleanCallId}</div>
                                 <div class="call-timeline">
                                     <div class="timeline-item">
                                         <span class="timeline-label">Started:</span>
@@ -1498,30 +1522,43 @@
                 return;
             }
 
+            // Filter for complete sessions only
+            const completeSessions = currentData.filter(session => {
+                const customerInfo = session.customerInfo;
+                const hasEssentialInfo = customerInfo.name && 
+                                       customerInfo.phone && 
+                                       customerInfo.email &&
+                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                
+                return hasEssentialInfo;
+            });
+
+            console.log('🔍 Customers - Total sessions:', currentData.length);
+            console.log('🔍 Customers - Complete sessions:', completeSessions.length);
+
+            if (completeSessions.length === 0) {
+                document.getElementById('customers-content').innerHTML = 
+                    '<div class="no-data">No complete customer data available. Complete calls with your AI agent to see customer information here.</div>';
+                return;
+            }
+
             // Group customers by unique phone numbers and only show complete records
             const customers = {};
-            currentData.forEach(session => {
+            completeSessions.forEach(session => {
                 const phone = session.customerInfo.phone;
                 if (phone && !customers[phone]) {
-                    // Only create customer entry if we have essential information
-                    const hasEssentialInfo = session.customerInfo.name && 
-                                           session.customerInfo.email && 
-                                           (session.customerInfo.carMake || session.customerInfo.carModel);
-                    
-                    if (hasEssentialInfo) {
-                        customers[phone] = {
-                            phone,
-                            name: session.customerInfo.name,
-                            email: session.customerInfo.email,
-                            carMake: session.customerInfo.carMake,
-                            carModel: session.customerInfo.carModel,
-                            carYear: session.customerInfo.carYear,
-                            triangleMember: session.customerInfo.triangleMember,
-                            location: session.customerInfo.location,
-                            calls: 0,
-                            appointmentsBooked: 0
-                        };
-                    }
+                    customers[phone] = {
+                        phone,
+                        name: session.customerInfo.name,
+                        email: session.customerInfo.email,
+                        carMake: session.customerInfo.carMake,
+                        carModel: session.customerInfo.carModel,
+                        carYear: session.customerInfo.carYear,
+                        triangleMember: session.customerInfo.triangleMember,
+                        location: session.customerInfo.location,
+                        calls: 0,
+                        appointmentsBooked: 0
+                    };
                 }
                 if (phone && customers[phone]) {
                     customers[phone].calls++;
@@ -1579,25 +1616,27 @@
                 return;
             }
 
-            console.log('🔍 Debug: Total sessions:', currentData.length);
-            console.log('🔍 Debug: Sessions with appointmentBooked=true:', currentData.filter(s => s.appointmentBooked === true).length);
-            console.log('🔍 Debug: Sessions with appointmentDetails:', currentData.filter(s => s.appointmentDetails && Object.keys(s.appointmentDetails).length > 0).length);
-            console.log('🔍 Debug: Sessions with preferred date/time:', currentData.filter(s => s.customerInfo.preferredDate && s.customerInfo.preferredTime).length);
-
-            // Filter for sessions that have appointments booked
+            // Filter for complete sessions that have appointments booked
             const appointments = currentData.filter(session => {
-                // Check if appointment is booked OR if we have appointment details
-                return session.appointmentBooked === true || 
-                       (session.appointmentDetails && Object.keys(session.appointmentDetails).length > 0) ||
-                       (session.customerInfo.preferredDate && session.customerInfo.preferredTime);
+                const customerInfo = session.customerInfo;
+                const hasEssentialInfo = customerInfo.name && 
+                                       customerInfo.phone && 
+                                       customerInfo.email &&
+                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                
+                const hasAppointment = session.appointmentBooked === true || 
+                                     (session.appointmentDetails && Object.keys(session.appointmentDetails).length > 0) ||
+                                     (customerInfo.preferredDate && customerInfo.preferredTime);
+                
+                return hasEssentialInfo && hasAppointment;
             });
             
-            console.log('🔍 Debug: Filtered appointments:', appointments.length);
-            console.log('🔍 Debug: Appointment data:', appointments);
+            console.log('🔍 Appointments - Total sessions:', currentData.length);
+            console.log('🔍 Appointments - Complete sessions with appointments:', appointments.length);
             
             if (appointments.length === 0) {
                 document.getElementById('appointments-content').innerHTML = 
-                    '<div class="no-data">No appointments have been booked yet. Complete calls with your AI agent to see appointments here.</div>';
+                    '<div class="no-data">No complete appointments found. Complete calls with your AI agent to see appointments here.</div>';
                 return;
             }
 
@@ -1630,6 +1669,9 @@
                         // Keep original format if parsing fails
                     }
                 }
+                
+                // Clean up call ID to remove any backend references
+                const cleanCallId = session.callId.replace(/retell-function-|retell-|function-/gi, 'Call-');
                 
                 return `
                     <div class="session-card appointment-card">
@@ -1716,7 +1758,7 @@
                         <div class="appointment-meta">
                             <div class="meta-item">
                                 <span class="meta-label">Call ID:</span>
-                                <span class="meta-value">${session.callId}</span>
+                                <span class="meta-value">${cleanCallId}</span>
                             </div>
                             <div class="meta-item">
                                 <span class="meta-label">Booked On:</span>
@@ -1738,11 +1780,31 @@
                 return;
             }
 
-            // Calculate enhanced analytics
-            const totalCalls = currentData.length;
-            const activeCalls = currentData.filter(s => s.status === 'active').length;
-            const completedCalls = currentData.filter(s => s.status === 'ended').length;
-            const appointmentsBooked = currentData.filter(s => s.appointmentBooked).length;
+            // Filter for complete sessions only
+            const completeSessions = currentData.filter(session => {
+                const customerInfo = session.customerInfo;
+                const hasEssentialInfo = customerInfo.name && 
+                                       customerInfo.phone && 
+                                       customerInfo.email &&
+                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                
+                return hasEssentialInfo;
+            });
+
+            console.log('🔍 Analytics - Total sessions:', currentData.length);
+            console.log('🔍 Analytics - Complete sessions:', completeSessions.length);
+
+            if (completeSessions.length === 0) {
+                document.getElementById('analytics-content').innerHTML = 
+                    '<div class="no-data">No complete data available for analytics. Complete calls with your AI agent to see analytics here.</div>';
+                return;
+            }
+
+            // Calculate enhanced analytics using complete sessions only
+            const totalCalls = completeSessions.length;
+            const activeCalls = completeSessions.filter(s => s.status === 'active').length;
+            const completedCalls = completeSessions.filter(s => s.status === 'ended').length;
+            const appointmentsBooked = completeSessions.filter(s => s.appointmentBooked).length;
             
             // Performance metrics
             const conversionRate = totalCalls > 0 ? Math.round((appointmentsBooked / totalCalls) * 100) : 0;
@@ -1751,7 +1813,7 @@
             
             // Service type distribution with revenue potential
             const serviceTypes = {};
-            currentData.forEach(session => {
+            completeSessions.forEach(session => {
                 const serviceType = session.customerInfo.serviceType;
                 if (serviceType) {
                     if (!serviceTypes[serviceType]) {
@@ -1774,7 +1836,7 @@
 
             // Location performance analysis
             const locations = {};
-            currentData.forEach(session => {
+            completeSessions.forEach(session => {
                 const location = session.customerInfo.location;
                 if (location) {
                     if (!locations[location]) {
@@ -1795,14 +1857,14 @@
             });
 
             // Customer insights
-            const triangleMembers = currentData.filter(s => s.customerInfo.triangleMember).length;
+            const triangleMembers = completeSessions.filter(s => s.customerInfo.triangleMember).length;
             const triangleConversionRate = triangleMembers > 0 ? 
-                Math.round((currentData.filter(s => s.customerInfo.triangleMember && s.appointmentBooked).length / triangleMembers) * 100) : 0;
+                Math.round((completeSessions.filter(s => s.customerInfo.triangleMember && s.appointmentBooked).length / triangleMembers) * 100) : 0;
 
             // Vehicle analysis
             const carMakes = {};
             const vehicleAgeDistribution = {};
-            currentData.forEach(session => {
+            completeSessions.forEach(session => {
                 const carMake = session.customerInfo.carMake;
                 const carYear = session.customerInfo.carYear;
                 
@@ -1861,7 +1923,7 @@
                                     </div>
                                     <div class="service-details">
                                         <span class="service-duration">Avg: ${data.avgDuration}m</span>
-                                        <span class="service-conversion">${Math.round((currentData.filter(s => s.customerInfo.serviceType === service && s.appointmentBooked).length / data.count) * 100)}% conversion</span>
+                                        <span class="service-conversion">${Math.round((completeSessions.filter(s => s.customerInfo.serviceType === service && s.appointmentBooked).length / data.count) * 100)}% conversion</span>
                                     </div>
                                 </div>
                             `).join('') : 
@@ -1979,7 +2041,17 @@
         function analyzePeakHours() {
             const hourlyCounts = {};
             
-            currentData.forEach(session => {
+            // Use filtered complete sessions for peak hours analysis
+            const completeSessions = currentData.filter(session => {
+                const customerInfo = session.customerInfo;
+                const hasEssentialInfo = customerInfo.name && 
+                                       customerInfo.phone && 
+                                       customerInfo.email &&
+                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                return hasEssentialInfo;
+            });
+            
+            completeSessions.forEach(session => {
                 const hour = new Date(session.startTime).getHours();
                 hourlyCounts[hour] = (hourlyCounts[hour] || 0) + 1;
             });
@@ -1996,7 +2068,17 @@
                 hourlyDistribution[i] = 0;
             }
             
-            currentData.forEach(session => {
+            // Use filtered complete sessions for hourly distribution
+            const completeSessions = currentData.filter(session => {
+                const customerInfo = session.customerInfo;
+                const hasEssentialInfo = customerInfo.name && 
+                                       customerInfo.phone && 
+                                       customerInfo.email &&
+                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                return hasEssentialInfo;
+            });
+            
+            completeSessions.forEach(session => {
                 const hour = new Date(session.startTime).getHours();
                 hourlyDistribution[hour]++;
             });
@@ -2008,7 +2090,17 @@
         function analyzeDailyTrends() {
             const dailyCounts = {};
             
-            currentData.forEach(session => {
+            // Use filtered complete sessions for daily trends
+            const completeSessions = currentData.filter(session => {
+                const customerInfo = session.customerInfo;
+                const hasEssentialInfo = customerInfo.name && 
+                                       customerInfo.phone && 
+                                       customerInfo.email &&
+                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                return hasEssentialInfo;
+            });
+            
+            completeSessions.forEach(session => {
                 const day = new Date(session.startTime).toLocaleDateString('en-US', { weekday: 'long' });
                 dailyCounts[day] = (dailyCounts[day] || 0) + 1;
             });
