@@ -119,66 +119,7 @@
             font-weight: 500;
         }
 
-        /* Refresh Button */
-        .refresh-btn {
-            background: #E31837;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(227, 24, 55, 0.3);
-            margin-right: 15px;
-        }
 
-        .refresh-btn:hover {
-            background: #C41230;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(227, 24, 55, 0.4);
-        }
-
-        /* Clear Data Button */
-        .clear-data-btn {
-            background: #6C757D;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
-        }
-
-        .clear-data-btn:hover {
-            background: #5A6268;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
-        }
-
-        /* Data Management Section */
-        .data-management {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            align-items: center;
-        }
-
-        .data-status {
-            background: #E8F0FE;
-            color: #0066CC;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border: 1px solid #BBDEFF;
-        }
 
         /* Dashboard Tabs */
         .dashboard-tabs {
@@ -1257,15 +1198,6 @@
             </div>
         </div>
 
-        <div class="data-management">
-            <button class="refresh-btn" onclick="manualRefresh()">🔄 Refresh Data</button>
-            <button class="clear-data-btn" onclick="clearStoredData()">🗑️ Clear Data</button>
-            <div class="data-status">
-                <div>📊 <strong>Data Source:</strong> <span id="data-source">-</span></div>
-                <div>🕒 <strong>Last Updated:</strong> <span id="last-update">-</span></div>
-            </div>
-        </div>
-
         <div class="dashboard-tabs">
             <button class="tab active" onclick="showTab('sessions')">📞 Call Sessions</button>
             <button class="tab" onclick="showTab('customers')">👥 Customer Data</button>
@@ -1345,16 +1277,7 @@
             return null;
         }
 
-        function clearStoredData() {
-            try {
-                localStorage.removeItem('ct_dashboard_data');
-                console.log('🗑️ Stored data cleared');
-                // Reload data to reflect the clear
-                refreshData();
-            } catch (error) {
-                console.error('Error clearing stored data:', error);
-            }
-        }
+
 
         // Tab switching
         function showTab(tabName) {
@@ -1396,64 +1319,12 @@
             }
         }
 
-        // Refresh all data
-        async function refreshData() {
-            try {
-                console.log('🔄 Attempting to fetch data from:', `${API_BASE}/api/call/sessions`);
-                const response = await fetch(`${API_BASE}/api/call/sessions`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('📊 API Response:', data);
-                
-                if (data.sessions && data.sessions.length > 0) {
-                    currentData = data.sessions;
-                    // Save data to localStorage for persistence
-                    saveDataToStorage(currentData);
-                    updateStats();
-                    displaySessions();
-                    displayCustomers();
-                    displayAppointments();
-                    displayAnalytics();
-                    console.log('✅ Data refreshed successfully from API:', data.sessions.length, 'sessions');
-                } else {
-                    console.log('⚠️ API returned no sessions, keeping existing data if available');
-                    // Don't overwrite existing data if API returns empty
-                    if (!currentData || currentData.length === 0) {
-                        document.getElementById('sessions-content').innerHTML = 
-                            '<div class="no-data">No call sessions found. Make a call to your AI agent to see data here.</div>';
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error refreshing data:', error);
-                
-                // Try to load from localStorage if API fails
-                const storedData = loadDataFromStorage();
-                if (storedData && storedData.length > 0) {
-                    currentData = storedData;
-                    updateStats();
-                    displaySessions();
-                    displayCustomers();
-                    displayAppointments();
-                    displayAnalytics();
-                    console.log('📂 Using stored data due to API error:', storedData.length, 'sessions');
-                } else {
-                    console.log('⚠️ No stored data available, showing no data message');
-                    document.getElementById('sessions-content').innerHTML = 
-                        '<div class="no-data">Error loading data. Please try again.<br><br>' +
-                        '<strong>Debug Info:</strong><br>' +
-                        'API Endpoint: ' + API_BASE + '/api/call/sessions<br>' +
-                        'Error: ' + error.message + '</div>';
-                }
-            }
-        }
+
+
 
         // Load data on page load
         function loadInitialData() {
-            // First try to load from localStorage for instant display
+            // Load from localStorage for instant display
             const storedData = loadDataFromStorage();
             if (storedData && storedData.length > 0) {
                 currentData = storedData;
@@ -1466,11 +1337,6 @@
             } else {
                 console.log('📂 No stored data available');
             }
-            
-            // Then refresh from API to get latest data (but don't overwrite if API fails)
-            setTimeout(() => {
-                refreshData();
-            }, 1000); // Small delay to ensure localStorage data is displayed first
         }
 
         // Update statistics
