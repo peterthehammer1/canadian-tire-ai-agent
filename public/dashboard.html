@@ -1035,6 +1035,213 @@
             font-size: 0.6rem; /* Reduced by 25% from 0.8rem */
             font-weight: 600;
         }
+
+        /* Calendar View Styles */
+        .calendar-day {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .day-header {
+            background: linear-gradient(135deg, #E31837 0%, #C41230 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-date {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .day-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .day-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .month-name {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .day-stats {
+            text-align: right;
+        }
+
+        .appointment-count {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .day-utilization {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .day-appointments {
+            padding: 20px;
+        }
+
+        .appointment-item {
+            display: grid;
+            grid-template-columns: 120px 1fr 200px;
+            gap: 20px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #fafafa;
+            transition: all 0.3s ease;
+        }
+
+        .appointment-item:hover {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .appointment-time {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #28A745 0%, #20C997 100%);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .time-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .time-slot {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .appointment-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .customer-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .service-type {
+            font-size: 1rem;
+            color: #E31837;
+            font-weight: 500;
+            background: rgba(227, 24, 55, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .vehicle-info {
+            font-size: 0.9rem;
+            color: #666;
+            background: #f0f0f0;
+            padding: 6px 10px;
+            border-radius: 4px;
+        }
+
+        .location-info {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .triangle-status {
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .triangle-status:contains('🔺') {
+            background: rgba(227, 24, 55, 0.1);
+            color: #E31837;
+        }
+
+        .appointment-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #888;
+            text-align: right;
+        }
+
+        .call-id {
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .booking-time {
+            font-style: italic;
+        }
+
+        /* Responsive Design for Calendar */
+        @media (max-width: 768px) {
+            .appointment-item {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .appointment-time {
+                order: -1;
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .day-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .day-stats {
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1640,136 +1847,238 @@
                 return;
             }
 
-            const appointmentsHtml = appointments.map(session => {
-                // Extract appointment information
-                const appointmentDate = session.customerInfo.preferredDate || 
-                                     (session.appointmentDetails ? session.appointmentDetails.date : 'Not specified');
-                const appointmentTime = session.customerInfo.preferredTime || 
-                                      (session.appointmentDetails ? session.appointmentDetails.time : 'Not specified');
-                const serviceType = session.customerInfo.serviceType || 'Not specified';
-                const serviceReason = session.customerInfo.serviceReason || 'Not specified';
+            // Group appointments by date for calendar view
+            const appointmentsByDate = {};
+            appointments.forEach(session => {
+                let appointmentDate, appointmentTime;
                 
-                // Format the date for display
-                let displayDate = appointmentDate;
-                let displayTime = appointmentTime;
-                
-                // Try to parse and format the date if it's a valid date string
-                if (appointmentDate && appointmentDate !== 'Not specified') {
-                    try {
-                        const parsedDate = new Date(appointmentDate);
-                        if (!isNaN(parsedDate.getTime())) {
-                            displayDate = parsedDate.toLocaleDateString('en-US', { 
-                                weekday: 'long', 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                            });
-                        }
-                    } catch (e) {
-                        // Keep original format if parsing fails
-                    }
+                if (session.customerInfo.preferredDate && session.customerInfo.preferredTime) {
+                    appointmentDate = session.customerInfo.preferredDate;
+                    appointmentTime = session.customerInfo.preferredTime;
+                } else if (session.appointmentDetails && session.appointmentDetails.date && session.appointmentDetails.time) {
+                    appointmentDate = session.appointmentDetails.date;
+                    appointmentTime = session.appointmentDetails.time;
+                } else {
+                    // Skip if no date/time info
+                    return;
                 }
                 
-                // Clean up call ID to remove any backend references
-                const cleanCallId = session.callId.replace(/retell-function-|retell-|function-/gi, 'Call-');
+                // Parse and format the date
+                let formattedDate, displayDate, calendarDate;
+                try {
+                    if (appointmentDate.includes(' ')) {
+                        // Handle natural language dates like "August 19", "next Tuesday"
+                        const parsed = parseNaturalDate(appointmentDate);
+                        calendarDate = parsed;
+                        displayDate = parsed.toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        });
+                        formattedDate = parsed.toISOString().split('T')[0];
+                    } else {
+                        // Handle ISO date format
+                        calendarDate = new Date(appointmentDate);
+                        displayDate = calendarDate.toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        });
+                        formattedDate = appointmentDate;
+                    }
+                } catch (e) {
+                    console.warn('Could not parse date:', appointmentDate, e);
+                    return;
+                }
+                
+                if (!appointmentsByDate[formattedDate]) {
+                    appointmentsByDate[formattedDate] = [];
+                }
+                
+                appointmentsByDate[formattedDate].push({
+                    ...session,
+                    parsedDate: calendarDate,
+                    formattedDate: formattedDate,
+                    displayDate: displayDate,
+                    appointmentTime: appointmentTime,
+                    displayTime: formatTime(appointmentTime)
+                });
+            });
+            
+            // Sort dates chronologically
+            const sortedDates = Object.keys(appointmentsByDate).sort();
+            
+            const appointmentsHtml = sortedDates.map(date => {
+                const dayAppointments = appointmentsByDate[date].sort((a, b) => 
+                    a.appointmentTime.localeCompare(b.appointmentTime)
+                );
+                
+                const firstAppointment = dayAppointments[0];
+                const dayOfWeek = firstAppointment.parsedDate.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayNumber = firstAppointment.parsedDate.getDate();
+                const month = firstAppointment.parsedDate.toLocaleDateString('en-US', { month: 'short' });
+                
+                const dayAppointmentsHtml = dayAppointments.map(appointment => {
+                    // Clean up call ID to remove any backend references
+                    const cleanCallId = appointment.callId.replace(/retell-function-|retell-|function-/gi, 'Call-');
+                    
+                    return `
+                        <div class="appointment-item">
+                            <div class="appointment-time">
+                                <div class="time-display">${appointment.displayTime}</div>
+                                <div class="time-slot">1 hour slot</div>
+                            </div>
+                            
+                            <div class="appointment-details">
+                                <div class="customer-name">${appointment.customerInfo.name}</div>
+                                <div class="service-type">${getServiceTypeName(appointment.customerInfo.serviceType)}</div>
+                                <div class="vehicle-info">
+                                    ${appointment.customerInfo.carYear || ''} ${appointment.customerInfo.carMake || ''} ${appointment.customerInfo.carModel || ''}
+                                </div>
+                                <div class="location-info">📍 ${appointment.customerInfo.location || 'Location not specified'}</div>
+                                <div class="triangle-status">
+                                    ${appointment.customerInfo.triangleMember ? '🔺 Triangle Member' : '👤 Regular Customer'}
+                                </div>
+                            </div>
+                            
+                            <div class="appointment-meta">
+                                <div class="call-id">Call: ${cleanCallId}</div>
+                                <div class="booking-time">Booked: ${new Date(appointment.lastActivity).toLocaleString()}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
                 
                 return `
-                    <div class="session-card appointment-card">
-                        <div class="appointment-header">
-                            <div class="appointment-date">
-                                <div class="date-icon">📅</div>
-                                <div class="date-info">
-                                    <div class="date-main">${displayDate}</div>
-                                    <div class="time-info">${displayTime}</div>
+                    <div class="calendar-day">
+                        <div class="day-header">
+                            <div class="day-date">
+                                <div class="day-number">${dayNumber}</div>
+                                <div class="day-info">
+                                    <div class="day-name">${dayOfWeek}</div>
+                                    <div class="month-name">${month}</div>
                                 </div>
                             </div>
-                            <div class="appointment-status">
-                                <span class="appointment-badge">✅ Confirmed</span>
-                            </div>
-                        </div>
-                        
-                        <div class="customer-details">
-                            <h4>👤 Customer Information</h4>
-                            <div class="customer-grid">
-                                <div class="detail-item">
-                                    <span class="detail-label">Name:</span>
-                                    <span class="detail-value">${session.customerInfo.name || 'Not provided'}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Phone:</span>
-                                    <span class="detail-value">${session.customerInfo.phone || 'Not provided'}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Email:</span>
-                                    <span class="detail-value">${session.customerInfo.email || 'Not provided'}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Triangle Member:</span>
-                                    <span class="detail-value">${session.customerInfo.triangleMember ? 'Yes' : 'No'}</span>
-                                </div>
+                            <div class="day-stats">
+                                <div class="appointment-count">${dayAppointments.length} appointment${dayAppointments.length > 1 ? 's' : ''}</div>
+                                <div class="day-utilization">${Math.round((dayAppointments.length / 9) * 100)}% booked</div>
                             </div>
                         </div>
                         
-                        <div class="vehicle-details">
-                            <h4>🚗 Vehicle Information</h4>
-                            <div class="vehicle-grid">
-                                <div class="detail-item">
-                                    <span class="detail-label">Year:</span>
-                                    <span class="detail-value">${session.customerInfo.carYear || 'Not specified'}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Make:</span>
-                                    <span class="detail-value">${session.customerInfo.carMake || 'Not specified'}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Model:</span>
-                                    <span class="detail-value">${session.customerInfo.carModel || 'Not specified'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="service-details">
-                            <h4>🔧 Service Details</h4>
-                            <div class="service-info">
-                                <div class="detail-item">
-                                    <span class="detail-label">Service Type:</span>
-                                    <span class="detail-value">${serviceType}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Service Reason:</span>
-                                    <span class="detail-value">${serviceReason}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Preferred Location:</span>
-                                    <span class="detail-value">${session.customerInfo.location || 'Not specified'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        ${session.appointmentDetails && Object.keys(session.appointmentDetails).length > 0 ? `
-                            <div class="appointment-notes">
-                                <h4>📝 Additional Notes</h4>
-                                <div class="notes-content">
-                                    <pre>${JSON.stringify(session.appointmentDetails, null, 2)}</pre>
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        <div class="appointment-meta">
-                            <div class="meta-item">
-                                <span class="meta-label">Call ID:</span>
-                                <span class="meta-value">${cleanCallId}</span>
-                            </div>
-                            <div class="meta-item">
-                                <span class="meta-label">Booked On:</span>
-                                <span class="meta-value">${new Date(session.lastActivity).toLocaleString()}</span>
-                            </div>
+                        <div class="day-appointments">
+                            ${dayAppointmentsHtml}
                         </div>
                     </div>
                 `;
             }).join('');
 
             document.getElementById('appointments-content').innerHTML = appointmentsHtml;
+        }
+
+        // Helper function to parse natural language dates
+        function parseNaturalDate(dateString) {
+            const lowerString = dateString.toLowerCase();
+            
+            // Handle relative dates
+            if (lowerString.includes('today')) {
+                return new Date();
+            } else if (lowerString.includes('tomorrow')) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                return tomorrow;
+            } else if (lowerString.includes('next week')) {
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                return nextWeek;
+            }
+            
+            // Handle specific days of the week
+            const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            for (let i = 0; i < daysOfWeek.length; i++) {
+                if (lowerString.includes(daysOfWeek[i])) {
+                    const targetDay = new Date();
+                    const currentDay = targetDay.getDay();
+                    const targetDayNum = i + 1;
+                    const daysToAdd = (targetDayNum + 7 - currentDay) % 7;
+                    if (daysToAdd === 0) daysToAdd = 7; // Next week
+                    targetDay.setDate(targetDay.getDate() + daysToAdd);
+                    return targetDay;
+                }
+            }
+            
+            // Handle specific dates (e.g., "August 19", "19th August")
+            const datePatterns = [
+                /(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})(?:st|nd|rd|th)?/i,
+                /(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i
+            ];
+            
+            for (const pattern of datePatterns) {
+                const match = dateString.match(pattern);
+                if (match) {
+                    let month, day;
+                    if (isNaN(match[1])) {
+                        month = match[1];
+                        day = parseInt(match[2]);
+                    } else {
+                        month = match[2];
+                        day = parseInt(match[1]);
+                    }
+                    
+                    const currentYear = new Date().getFullYear();
+                    let targetDate = new Date(`${month} ${day}, ${currentYear}`);
+                    
+                    // If the date has passed this year, try next year
+                    if (targetDate < new Date()) {
+                        targetDate = new Date(`${month} ${day}, ${currentYear + 1}`);
+                    }
+                    
+                    return targetDate;
+                }
+            }
+            
+            // Default to today if no date found
+            return new Date();
+        }
+
+        // Helper function to format time display
+        function formatTime(timeString) {
+            if (!timeString) return 'Time not specified';
+            
+            try {
+                // Handle various time formats
+                if (timeString.includes('am') || timeString.includes('pm')) {
+                    return timeString.toUpperCase();
+                } else if (timeString.includes(':')) {
+                    const [hours, minutes] = timeString.split(':');
+                    const hour = parseInt(hours);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+                    return `${displayHour}:${minutes} ${ampm}`;
+                } else {
+                    const hour = parseInt(timeString);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+                    return `${displayHour}:00 ${ampm}`;
+                }
+            } catch (e) {
+                return timeString;
+            }
+        }
+
+        // Helper function to get service type display name
+        function getServiceTypeName(serviceType) {
+            const serviceNames = {
+                'oil_change': 'Oil Change',
+                'tire_rotation': 'Tire Rotation',
+                'brake_service': 'Brake Service',
+                'battery_service': 'Battery Service',
+                'inspection': 'Vehicle Inspection',
+                'general_service': 'General Service'
+            };
+            
+            return serviceNames[serviceType] || serviceType || 'Service not specified';
         }
 
         // Display analytics

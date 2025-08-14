@@ -6,13 +6,132 @@ class AppointmentManager {
     this.serviceTypes = {
       'oil_change': { name: 'Oil Change', duration: 45, wrapUp: 15 },
       'tire_rotation': { name: 'Seasonal Tire Rotation', duration: 45, wrapUp: 15 },
-      'general_service': { name: 'General Check-up/Repair', duration: 45, wrapUp: 15 }
+      'general_service': { name: 'General Check-up/Repair', duration: 45, wrapUp: 15 },
+      'brake_service': { name: 'Brake Service', duration: 60, wrapUp: 15 },
+      'battery_service': { name: 'Battery Service', duration: 30, wrapUp: 15 },
+      'inspection': { name: 'Vehicle Inspection', duration: 45, wrapUp: 15 }
     };
     
     this.businessHours = {
       start: '08:00',
       end: '17:00',
       lastAppointment: '16:00'
+    };
+
+    this.locations = [
+      'Downtown Toronto',
+      'North York',
+      'Scarborough',
+      'Etobicoke',
+      'Mississauga',
+      'Brampton',
+      'Vaughan',
+      'Markham'
+    ];
+  }
+
+  // Parse natural language date/time into structured format
+  parseNaturalDateTime(dateTimeString) {
+    const lowerString = dateTimeString.toLowerCase();
+    
+    // Handle relative dates
+    if (lowerString.includes('today')) {
+      const today = moment();
+      return this.extractTimeFromString(dateTimeString, today);
+    } else if (lowerString.includes('tomorrow')) {
+      const tomorrow = moment().add(1, 'day');
+      return this.extractTimeFromString(dateTimeString, tomorrow);
+    } else if (lowerString.includes('next week')) {
+      const nextWeek = moment().add(1, 'week');
+      return this.extractTimeFromString(dateTimeString, nextWeek);
+    }
+    
+    // Handle specific days of the week
+    const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    for (let i = 0; i < daysOfWeek.length; i++) {
+      if (lowerString.includes(daysOfWeek[i])) {
+        const targetDay = moment().day(i + 1);
+        if (targetDay.isBefore(moment(), 'day')) {
+          targetDay.add(1, 'week');
+        }
+        return this.extractTimeFromString(dateTimeString, targetDay);
+      }
+    }
+    
+    // Handle specific dates (e.g., "August 19", "19th August")
+    const datePatterns = [
+      /(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})(?:st|nd|rd|th)?/i,
+      /(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i
+    ];
+    
+    for (const pattern of datePatterns) {
+      const match = dateTimeString.match(pattern);
+      if (match) {
+        let month, day;
+        if (isNaN(match[1])) {
+          month = match[1];
+          day = parseInt(match[2]);
+        } else {
+          month = match[2];
+          day = parseInt(match[1]);
+        }
+        
+        const currentYear = moment().year();
+        let targetDate = moment(`${month} ${day}, ${currentYear}`, 'MMMM D, YYYY');
+        
+        // If the date has passed this year, try next year
+        if (targetDate.isBefore(moment(), 'day')) {
+          targetDate = moment(`${month} ${day}, ${currentYear + 1}`, 'MMMM D, YYYY');
+        }
+        
+        return this.extractTimeFromString(dateTimeString, targetDate);
+      }
+    }
+    
+    // Default to today if no date found
+    return this.extractTimeFromString(dateTimeString, moment());
+  }
+
+  // Extract time from string and combine with date
+  extractTimeFromString(dateTimeString, date) {
+    const timePatterns = [
+      /(\d{1,2}):(\d{2})\s*(am|pm)/i,
+      /(\d{1,2})\s*(am|pm)/i,
+      /(\d{1,2}):(\d{2})/i,
+      /(\d{1,2})/i
+    ];
+    
+    for (const pattern of timePatterns) {
+      const match = dateTimeString.match(pattern);
+      if (match) {
+        let hour = parseInt(match[1]);
+        let minute = match[2] ? parseInt(match[2]) : 0;
+        const period = match[3] ? match[3].toLowerCase() : null;
+        
+        // Convert to 24-hour format
+        if (period === 'pm' && hour !== 12) {
+          hour += 12;
+        } else if (period === 'am' && hour === 12) {
+          hour = 0;
+        }
+        
+        // Ensure hour is within business hours
+        if (hour < 8) hour = 8;
+        if (hour > 16) hour = 16;
+        
+        return {
+          date: date.format('YYYY-MM-DD'),
+          time: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`,
+          parsed: true
+        };
+      }
+    }
+    
+    // Default time if none found
+    return {
+      date: date.format('YYYY-MM-DD'),
+      time: '09:00',
+      parsed: false
     };
   }
 
@@ -34,7 +153,8 @@ class AppointmentManager {
         slots.push({
           start: currentTime.format('HH:mm'),
           end: slotEnd.format('HH:mm'),
-          available: true
+          available: true,
+          formatted: currentTime.format('h:mm A')
         });
       }
       
@@ -44,7 +164,7 @@ class AppointmentManager {
     
     // Filter out conflicting appointments
     const conflictingAppointments = this.appointments.filter(apt => 
-      apt.date === date && apt.location === location
+      apt.date === date && apt.location === location && apt.status === 'confirmed'
     );
     
     return slots.map(slot => {
@@ -64,7 +184,70 @@ class AppointmentManager {
     }).filter(slot => slot.available);
   }
 
-  // Book an appointment
+  // Check if a specific time slot is available
+  isSlotAvailable(date, time, location, serviceType = null) {
+    const availableSlots = this.getAvailableSlots(date, location, serviceType);
+    return availableSlots.some(slot => slot.start === time);
+  }
+
+  // Book an appointment from call session data
+  bookAppointmentFromSession(sessionData) {
+    const { customerInfo, appointmentDetails } = sessionData;
+    
+    // Parse date and time from customer preferences
+    let appointmentDate, appointmentTime;
+    
+    if (customerInfo.preferredDate && customerInfo.preferredTime) {
+      // Try to parse natural language
+      const parsed = this.parseNaturalDateTime(`${customerInfo.preferredDate} ${customerInfo.preferredTime}`);
+      appointmentDate = parsed.date;
+      appointmentTime = parsed.time;
+    } else if (appointmentDetails && appointmentDetails.date && appointmentDetails.time) {
+      appointmentDate = appointmentDetails.date;
+      appointmentTime = appointmentDetails.time;
+    } else {
+      throw new Error('No appointment date and time specified');
+    }
+    
+    // Check availability
+    if (!this.isSlotAvailable(appointmentDate, appointmentTime, customerInfo.location, customerInfo.serviceType)) {
+      throw new Error(`The requested time slot (${appointmentDate} at ${appointmentTime}) is not available. Please choose another time.`);
+    }
+    
+    // Create appointment object
+    const appointment = {
+      id: this.generateId(),
+      callId: sessionData.callId,
+      date: appointmentDate,
+      time: appointmentTime,
+      location: customerInfo.location,
+      fullName: customerInfo.name,
+      phoneNumber: customerInfo.phone,
+      email: customerInfo.email,
+      carMake: customerInfo.carMake,
+      carModel: customerInfo.carModel,
+      carYear: customerInfo.carYear,
+      serviceType: customerInfo.serviceType || 'general_service',
+      loyaltyMember: customerInfo.triangleMember || false,
+      status: 'confirmed',
+      createdAt: new Date().toISOString(),
+      slotEnd: moment(appointmentDate + ' ' + appointmentTime, 'YYYY-MM-DD HH:mm').add(1, 'hour').format('HH:mm'),
+      totalDuration: 60,
+      notes: customerInfo.serviceReason || ''
+    };
+    
+    this.appointments.push(appointment);
+    
+    // Update the call session
+    if (sessionData.callId) {
+      // This would typically be done through the call session manager
+      console.log(`✅ Appointment booked from call session: ${appointment.id}`);
+    }
+    
+    return appointment;
+  }
+
+  // Book an appointment (legacy method)
   bookAppointment(appointmentData) {
     // Validate appointment data
     const validation = this.validateAppointmentData(appointmentData);
@@ -73,14 +256,7 @@ class AppointmentManager {
     }
     
     // Check if slot is still available
-    const availableSlots = this.getAvailableSlots(
-      appointmentData.date, 
-      appointmentData.location, 
-      appointmentData.serviceType
-    );
-    
-    const requestedSlot = availableSlots.find(slot => slot.start === appointmentData.time);
-    if (!requestedSlot) {
+    if (!this.isSlotAvailable(appointmentData.date, appointmentData.time, appointmentData.location, appointmentData.serviceType)) {
       throw new Error('Requested time slot is no longer available');
     }
     
@@ -90,7 +266,7 @@ class AppointmentManager {
       ...appointmentData,
       status: 'confirmed',
       createdAt: new Date().toISOString(),
-      slotEnd: requestedSlot.end,
+      slotEnd: moment(appointmentData.date + ' ' + appointmentData.time, 'YYYY-MM-DD HH:mm').add(1, 'hour').format('HH:mm'),
       totalDuration: 60
     };
     
@@ -154,6 +330,14 @@ class AppointmentManager {
       };
     }
     
+    // Check if location is valid
+    if (!this.locations.includes(data.location)) {
+      return {
+        valid: false,
+        error: `Invalid location. Available locations: ${this.locations.join(', ')}`
+      };
+    }
+    
     return { valid: true };
   }
 
@@ -180,14 +364,7 @@ class AppointmentManager {
       const tempManager = new AppointmentManager();
       tempManager.appointments = tempAppointments;
       
-      const availableSlots = tempManager.getAvailableSlots(
-        newDate, 
-        newLocation, 
-        this.appointments[index].serviceType
-      );
-      
-      const requestedSlot = availableSlots.find(slot => slot.start === newTime);
-      if (!requestedSlot) {
+      if (!tempManager.isSlotAvailable(newDate, newTime, newLocation, this.appointments[index].serviceType)) {
         throw new Error('Requested time slot is not available');
       }
     }
@@ -236,6 +413,23 @@ class AppointmentManager {
     return filtered.sort((a, b) => moment(a.date + ' ' + a.time).diff(moment(b.date + ' ' + b.time)));
   }
 
+  // Get all confirmed appointments for a specific date range
+  getConfirmedAppointments(startDate, endDate, location = null) {
+    const start = moment(startDate);
+    const end = moment(endDate);
+    
+    let filtered = this.appointments.filter(apt => 
+      apt.status === 'confirmed' &&
+      moment(apt.date).isBetween(start, end, 'day', '[]')
+    );
+    
+    if (location) {
+      filtered = filtered.filter(apt => apt.location === location);
+    }
+    
+    return filtered.sort((a, b) => moment(a.date + ' ' + a.time).diff(moment(b.date + ' ' + b.time)));
+  }
+
   // Generate unique ID
   generateId() {
     return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -249,6 +443,11 @@ class AppointmentManager {
   // Get service types
   getServiceTypes() {
     return this.serviceTypes;
+  }
+
+  // Get available locations
+  getLocations() {
+    return this.locations;
   }
 
   // Get appointment statistics
@@ -275,6 +474,18 @@ class AppointmentManager {
       utilizationRate: ((totalBooked / totalSlots) * 100).toFixed(1) + '%',
       serviceBreakdown
     };
+  }
+
+  // Get next available slot for a specific date and location
+  getNextAvailableSlot(date, location, serviceType = null) {
+    const availableSlots = this.getAvailableSlots(date, location, serviceType);
+    return availableSlots.length > 0 ? availableSlots[0] : null;
+  }
+
+  // Suggest alternative times when requested slot is unavailable
+  suggestAlternativeTimes(date, location, serviceType = null, count = 3) {
+    const availableSlots = this.getAvailableSlots(date, location, serviceType);
+    return availableSlots.slice(0, count);
   }
 }
 

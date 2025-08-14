@@ -99,109 +99,211 @@ class CallSessionManager {
     
     for (const pattern of namePatterns) {
       const match = transcript.match(pattern);
-      if (match && match[1]) {
+      if (match) {
         extracted.name = match[1].trim();
         break;
       }
     }
 
     // Extract email
-    const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+    const emailPattern = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
     const emailMatch = transcript.match(emailPattern);
     if (emailMatch) {
       extracted.email = emailMatch[0];
     }
 
     // Extract car make
-    const carMakes = ['toyota', 'honda', 'ford', 'chevrolet', 'nissan', 'bmw', 'mercedes', 'audi', 'volkswagen', 'hyundai', 'kia', 'mazda', 'subaru', 'lexus', 'acura', 'infiniti', 'cadillac', 'buick', 'chrysler', 'dodge', 'jeep', 'ram', 'gmc', 'pontiac', 'saturn', 'scion'];
-    for (const make of carMakes) {
-      if (lowerTranscript.includes(make)) {
-        extracted.carMake = make.charAt(0).toUpperCase() + make.slice(1);
+    const carMakePatterns = [
+      /(?:car|vehicle|auto|truck)\s+(?:is\s+)?(?:a\s+)?([a-zA-Z]+)/i,
+      /(?:drive|own|have)\s+(?:a\s+)?([a-zA-Z]+)/i,
+      /(?:make|brand)\s*[:\-]?\s*([a-zA-Z]+)/i
+    ];
+    
+    for (const pattern of carMakePatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        extracted.carMake = match[1].trim();
         break;
       }
     }
 
-    // Extract car model (look for patterns after car make)
-    if (extracted.carMake) {
-      const makeIndex = lowerTranscript.indexOf(extracted.carMake.toLowerCase());
-      if (makeIndex !== -1) {
-        const afterMake = transcript.substring(makeIndex + extracted.carMake.length).trim();
-        const modelMatch = afterMake.match(/^([a-zA-Z0-9\s]+?)(?:\s|\.|$)/);
-        if (modelMatch) {
-          extracted.carModel = modelMatch[1].trim();
-        }
+    // Extract car model
+    const carModelPatterns = [
+      /(?:model|type)\s*[:\-]?\s*([a-zA-Z0-9\s]+?)(?:\s|\.|$)/i,
+      /(?:car|vehicle)\s+(?:is\s+)?(?:a\s+)?[a-zA-Z]+\s+([a-zA-Z0-9\s]+?)(?:\s|\.|$)/i
+    ];
+    
+    for (const pattern of carModelPatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        extracted.carModel = match[1].trim();
+        break;
       }
     }
 
     // Extract car year
-    const yearPattern = /(?:19|20)\d{2}/;
+    const yearPattern = /(?:19|20)\d{2}/g;
     const yearMatch = transcript.match(yearPattern);
     if (yearMatch) {
-      extracted.carYear = parseInt(yearMatch[0]);
+      extracted.carYear = yearMatch[0];
     }
 
     // Extract service type
-    const serviceTypes = {
-      'oil change': 'Oil Change',
-      'tire rotation': 'Seasonal Tire Rotation',
-      'tire': 'Seasonal Tire Rotation',
-      'general check': 'General Check-up/Repair',
-      'check up': 'General Check-up/Repair',
-      'repair': 'General Check-up/Repair',
-      'maintenance': 'General Check-up/Repair'
-    };
+    const servicePatterns = [
+      /(?:need|want|looking for|require)\s+(?:a\s+)?([a-zA-Z\s]+?)(?:service|check|inspection|change|rotation|repair)/i,
+      /(?:service|work|maintenance)\s*[:\-]?\s*([a-zA-Z\s]+)/i,
+      /(?:oil change|tire rotation|brake service|battery service|inspection|general service)/i
+    ];
     
-    for (const [key, value] of Object.entries(serviceTypes)) {
-      if (lowerTranscript.includes(key)) {
-        extracted.serviceType = value;
+    for (const pattern of servicePatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        let serviceType = match[1] || match[0];
+        // Map to standardized service types
+        if (serviceType.toLowerCase().includes('oil')) {
+          extracted.serviceType = 'oil_change';
+        } else if (serviceType.toLowerCase().includes('tire') || serviceType.toLowerCase().includes('rotation')) {
+          extracted.serviceType = 'tire_rotation';
+        } else if (serviceType.toLowerCase().includes('brake')) {
+          extracted.serviceType = 'brake_service';
+        } else if (serviceType.toLowerCase().includes('battery')) {
+          extracted.serviceType = 'battery_service';
+        } else if (serviceType.toLowerCase().includes('inspection')) {
+          extracted.serviceType = 'inspection';
+        } else {
+          extracted.serviceType = 'general_service';
+        }
         break;
       }
     }
 
-    // Extract triangle membership
-    if (lowerTranscript.includes('triangle member') || lowerTranscript.includes('loyalty program')) {
-      extracted.triangleMember = lowerTranscript.includes('yes') || lowerTranscript.includes('member');
+    // Extract triangle member status
+    const trianglePatterns = [
+      /(?:triangle|loyalty|member|rewards)\s+(?:member|program|card)/i,
+      /(?:have|am|is)\s+(?:a\s+)?(?:triangle|loyalty|rewards)\s+member/i
+    ];
+    
+    for (const pattern of trianglePatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        extracted.triangleMember = true;
+        break;
+      }
     }
 
-    // Extract location
+    // Extract location preference
     const locationPatterns = [
-      /(?:location|store|branch)\s*[:\-]?\s*([a-zA-Z\s]+?)(?:\s|\.|$)/i,
-      /(?:canadian tire|ct)\s+([a-zA-Z\s]+?)(?:\s|\.|$)/i
+      /(?:location|store|branch|location)\s*[:\-]?\s*([a-zA-Z\s]+?)(?:\s|\.|$)/i,
+      /(?:prefer|want|like)\s+(?:to\s+)?(?:go\s+to|visit)\s+([a-zA-Z\s]+?)(?:\s|\.|$)/i,
+      /(?:near|at|in)\s+([a-zA-Z\s]+?)(?:\s|\.|$)/i
     ];
     
     for (const pattern of locationPatterns) {
       const match = transcript.match(pattern);
-      if (match && match[1]) {
-        extracted.location = match[1].trim();
+      if (match) {
+        const location = match[1].trim();
+        // Map to standardized locations
+        const standardizedLocations = [
+          'Downtown Toronto', 'North York', 'Scarborough', 'Etobicoke',
+          'Mississauga', 'Brampton', 'Vaughan', 'Markham'
+        ];
+        
+        for (const stdLocation of standardizedLocations) {
+          if (location.toLowerCase().includes(stdLocation.toLowerCase().split(' ')[0])) {
+            extracted.location = stdLocation;
+            break;
+          }
+        }
+        if (extracted.location) break;
+      }
+    }
+
+    // Extract service reason/description
+    const reasonPatterns = [
+      /(?:because|since|as|reason)\s+([^\.]+)/i,
+      /(?:issue|problem|concern)\s*[:\-]?\s*([^\.]+)/i,
+      /(?:symptom|sign)\s*[:\-]?\s*([^\.]+)/i
+    ];
+    
+    for (const pattern of reasonPatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        extracted.serviceReason = match[1].trim();
         break;
       }
     }
 
-    // Extract date preferences
+    // Enhanced date and time extraction
+    const dateTimeExtracted = this.extractDateTimeFromTranscript(transcript);
+    if (dateTimeExtracted.date) {
+      extracted.preferredDate = dateTimeExtracted.date;
+    }
+    if (dateTimeExtracted.time) {
+      extracted.preferredTime = dateTimeExtracted.time;
+    }
+
+    return extracted;
+  }
+
+  // Enhanced date and time extraction
+  extractDateTimeFromTranscript(transcript) {
+    const extracted = {};
+    const lowerTranscript = transcript.toLowerCase();
+
+    // Extract specific dates (e.g., "August 19", "19th August", "next Tuesday")
     const datePatterns = [
-      /(?:on|for|this|next)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i,
-      /(?:on|for)\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}/i,
-      /(?:on|for)\s+\d{1,2}\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i
+      // Specific month and day
+      /(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})(?:st|nd|rd|th)?/i,
+      /(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i,
+      // Relative dates
+      /(today|tomorrow|next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday))/i,
+      /(this\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday))/i,
+      // Date ranges
+      /(next\s+week|this\s+week|following\s+week)/i
     ];
-    
+
     for (const pattern of datePatterns) {
       const match = transcript.match(pattern);
       if (match) {
-        extracted.preferredDate = match[0];
+        extracted.date = match[0];
+        break;
+      }
+    }
+
+    // Extract specific times
+    const timePatterns = [
+      // 12-hour format with AM/PM
+      /(\d{1,2}):(\d{2})\s*(am|pm)/i,
+      /(\d{1,2})\s*(am|pm)/i,
+      // 24-hour format
+      /(\d{1,2}):(\d{2})/i,
+      // Just hour
+      /(\d{1,2})\s+(?:o'clock|oclock|am|pm)/i,
+      // Time ranges
+      /(morning|afternoon|evening|night)/i,
+      // Specific time periods
+      /(9\s*am|10\s*am|11\s*am|12\s*pm|1\s*pm|2\s*pm|3\s*pm|4\s*pm)/i
+    ];
+
+    for (const pattern of timePatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        extracted.time = match[0];
         break;
       }
     }
 
     // Extract time preferences
-    const timePatterns = [
-      /(?:at|around|about)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i,
-      /(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i
+    const timePreferencePatterns = [
+      /(?:prefer|want|like|need)\s+(?:it\s+)?(?:at|around|about)\s+([^\.]+)/i,
+      /(?:time|when)\s*[:\-]?\s*([^\.]+)/i,
+      /(?:available|free)\s+(?:at|around|about)\s+([^\.]+)/i
     ];
-    
-    for (const pattern of timePatterns) {
+
+    for (const pattern of timePreferencePatterns) {
       const match = transcript.match(pattern);
-      if (match) {
-        extracted.preferredTime = match[1] || match[0];
+      if (match && !extracted.time) {
+        extracted.time = match[1].trim();
         break;
       }
     }

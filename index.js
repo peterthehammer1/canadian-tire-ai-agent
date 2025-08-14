@@ -57,10 +57,77 @@ app.post('/api/check-availability', (req, res) => {
     res.json({ 
       availableSlots,
       businessHours: appointmentManager.getBusinessHours(),
-      serviceTypes: appointmentManager.getServiceTypes()
+      serviceTypes: appointmentManager.getServiceTypes(),
+      locations: appointmentManager.getLocations()
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// New endpoint to check availability for a specific time slot
+app.post('/api/check-slot-availability', (req, res) => {
+  try {
+    const { date, time, location, serviceType } = req.body;
+    
+    if (!date || !time || !location) {
+      return res.status(400).json({ error: 'Date, time, and location are required' });
+    }
+    
+    const isAvailable = appointmentManager.isSlotAvailable(date, time, location, serviceType);
+    
+    if (isAvailable) {
+      res.json({ 
+        available: true,
+        message: 'Time slot is available'
+      });
+    } else {
+      // Suggest alternative times
+      const alternativeSlots = appointmentManager.suggestAlternativeTimes(date, location, serviceType, 3);
+      res.json({ 
+        available: false,
+        message: 'Time slot is not available',
+        alternativeSlots,
+        nextAvailable: appointmentManager.getNextAvailableSlot(date, location, serviceType)
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// New endpoint to book appointment from call session
+app.post('/api/book-appointment-from-session', (req, res) => {
+  try {
+    const { callId, customerInfo, appointmentDetails } = req.body;
+    
+    if (!callId || !customerInfo) {
+      return res.status(400).json({ error: 'Call ID and customer info are required' });
+    }
+    
+    // Create session data object
+    const sessionData = {
+      callId,
+      customerInfo,
+      appointmentDetails
+    };
+    
+    // Book the appointment
+    const appointment = appointmentManager.bookAppointmentFromSession(sessionData);
+    
+    // Update the call session
+    callSessionManager.bookAppointment(callId, appointment);
+    
+    res.json({ 
+      success: true, 
+      appointment,
+      message: 'Appointment booked successfully from call session!' 
+    });
+  } catch (error) {
+    res.status(400).json({ 
+      error: error.message,
+      message: 'Unable to book appointment. Please try another time.'
+    });
   }
 });
 
@@ -89,6 +156,22 @@ app.get('/api/appointments', (req, res) => {
   }
 });
 
+// New endpoint to get appointments for a date range
+app.get('/api/appointments/range', (req, res) => {
+  try {
+    const { startDate, endDate, location } = req.query;
+    
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'Start date and end date are required' });
+    }
+    
+    const appointments = appointmentManager.getConfirmedAppointments(startDate, endDate, location);
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/appointments/:id', (req, res) => {
   try {
     const appointment = appointmentManager.getAppointment(req.params.id);
@@ -96,6 +179,32 @@ app.get('/api/appointments/:id', (req, res) => {
       return res.status(404).json({ error: 'Appointment not found' });
     }
     res.json(appointment);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// New endpoint to get appointment statistics
+app.get('/api/appointments/stats/:date', (req, res) => {
+  try {
+    const { date } = req.params;
+    const { location } = req.query;
+    
+    const stats = appointmentManager.getStatistics(date, location);
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// New endpoint to get available locations and service types
+app.get('/api/appointment-options', (req, res) => {
+  try {
+    res.json({
+      locations: appointmentManager.getLocations(),
+      serviceTypes: appointmentManager.getServiceTypes(),
+      businessHours: appointmentManager.getBusinessHours()
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
