@@ -1249,7 +1249,7 @@
     <!-- Canadian Tire Header -->
     <div class="ct-header">
         <div class="ct-branding">
-            <img src="/images/ctlogo.png" alt="Canadian Tire Logo" class="ct-logo-image">
+            <img src="images/ctlogo.png" alt="Canadian Tire Logo" class="ct-logo-image" onerror="console.log('Logo failed to load:', this.src)" onload="console.log('Logo loaded successfully:', this.src)">
             <div class="ct-logo-text">Canadian Tire AI Agent</div>
         </div>
         <div class="ct-contact">
