@@ -538,22 +538,28 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('✅ Function data processed for call:', callId);
       console.log('📝 Updated customer info:', session.customerInfo);
     } else if (req.body.serviceType || req.body.name || req.body.phone) {
-      // Handle direct data format from Retell AI (when function data is sent directly)
-      console.log('🔧 Direct function data received from Retell AI');
+      // Handle complete customer data from Retell AI (single webhook call)
+      console.log('🔧 Complete customer data received from Retell AI');
       console.log('📊 Data:', JSON.stringify(req.body, null, 2));
+      
+      // Check if this is a complete customer record
+      const hasCompleteData = req.body.name && req.body.phone && req.body.serviceType;
+      
+      if (!hasCompleteData) {
+        console.log('⚠️ Incomplete data received, skipping webhook processing');
+        res.json({ success: true, message: 'Incomplete data, skipping' });
+        return;
+      }
       
       // Try to find existing session by phone number to prevent duplicates
       let existingSession = null;
       let existingCallId = null;
       
       if (req.body.phone && req.body.phone !== 'unknown') {
-        // Look for existing session with this phone number
         const allSessions = callSessionManager.getAllSessions();
         console.log('🔍 Looking for existing session with phone:', req.body.phone);
-        console.log('📋 Available sessions:', allSessions.length);
         
         for (const session of allSessions) {
-          console.log('📞 Checking session phone:', session.customerInfo.phone, 'vs', req.body.phone);
           if (session.customerInfo.phone === req.body.phone) {
             existingSession = session;
             existingCallId = session.callId;
@@ -566,34 +572,50 @@ app.post('/webhook/ai', async (req, res) => {
       let callId, session;
       
       if (existingSession) {
-        // Update existing session instead of creating a new one
+        // Update existing session with complete data
         callId = existingCallId;
         session = existingSession;
         console.log('🔄 Updating existing session for phone:', req.body.phone);
         
-        // Update the existing session with new data
-        Object.entries(req.body).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== '') {
-            callSessionManager.updateCustomerInfo(callId, key, value);
-          }
-        });
+        // Clear existing customer info and replace with complete data
+        session.customerInfo = {
+          name: req.body.name || null,
+          phone: req.body.phone || null,
+          email: req.body.email || null,
+          carMake: req.body.carMake || null,
+          carModel: req.body.carModel || null,
+          carYear: req.body.carYear || null,
+          serviceType: req.body.serviceType || null,
+          triangleMember: req.body.triangleMember || null,
+          location: req.body.location || null,
+          preferredDate: req.body.preferredDate || null,
+          preferredTime: req.body.preferredTime || null
+        };
         
         // Update last activity
         session.lastActivity = new Date().toISOString();
         
-        console.log('✅ Updated existing session with new data');
+        console.log('✅ Updated existing session with complete data');
       } else {
-        // Create new session only if no existing session found
-        callId = 'retell-function-' + Date.now();
+        // Create new session with complete data
+        callId = 'retell-complete-' + Date.now();
         session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
         console.log('🆕 Creating new session for phone:', req.body.phone);
         
-        // Update session with all the data
-        Object.entries(req.body).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== '') {
-            callSessionManager.updateCustomerInfo(callId, key, value);
-          }
-        });
+        // Set complete customer info
+        session.customerInfo = {
+          name: req.body.name || null,
+          phone: req.body.phone || null,
+          email: req.body.email || null,
+          carMake: req.body.carMake || null,
+          carModel: req.body.carModel || null,
+          carYear: req.body.carYear || null,
+          serviceType: req.body.serviceType || null,
+          triangleMember: req.body.triangleMember || null,
+          location: req.body.location || null,
+          preferredDate: req.body.preferredDate || null,
+          preferredTime: req.body.preferredTime || null
+        };
       }
       
       // Check if we have enough info to book an appointment
@@ -604,8 +626,6 @@ app.post('/webhook/ai', async (req, res) => {
       
       if (hasRequiredInfo && !session.appointmentBooked) {
         console.log('✅ All required info collected, ready to book appointment');
-        // Here you would trigger the appointment booking flow
-        // For now, mark as ready for booking
         session.appointmentBooked = true;
         session.appointmentDetails = {
           date: customerInfo.preferredDate,
@@ -613,11 +633,15 @@ app.post('/webhook/ai', async (req, res) => {
           service: customerInfo.serviceType,
           location: customerInfo.location
         };
+        console.log('📅 Appointment marked as booked');
       }
       
-      console.log('✅ Direct function data processed for call:', callId);
-      console.log('📝 Updated customer info:', session.customerInfo);
-      console.log('📅 Appointment status:', session.appointmentBooked ? 'Ready' : 'Collecting info');
+      // End the session since this is the complete data
+      callSessionManager.endSession(callId);
+      
+      console.log('✅ Complete customer data processed for call:', callId);
+      console.log('📝 Final customer info:', session.customerInfo);
+      console.log('📅 Appointment status:', session.appointmentBooked ? 'Booked' : 'Incomplete');
     } else {
       console.log('❓ Unknown event type:', event_type);
       console.log('📋 Full payload:', JSON.stringify(req.body, null, 2));
