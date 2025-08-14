@@ -541,6 +541,10 @@ app.post('/webhook/ai', async (req, res) => {
       // Handle complete customer data from Retell AI (single webhook call)
       console.log('🔧 Complete customer data received from Retell AI');
       console.log('📊 Data:', JSON.stringify(req.body, null, 2));
+      console.log('🔍 Debug - Reached the customer data processing path');
+      console.log('🔍 Debug - req.body.serviceType:', req.body.serviceType);
+      console.log('🔍 Debug - req.body.name:', req.body.name);
+      console.log('🔍 Debug - req.body.phone:', req.body.phone);
       
       // Check if this is a valid customer record (at least name and phone)
       const hasValidData = req.body.name && req.body.phone;
