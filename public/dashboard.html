@@ -1324,7 +1324,7 @@
 
         // Load data on page load
         function loadInitialData() {
-            // Load from localStorage for instant display
+            // First try to load from localStorage for instant display
             const storedData = loadDataFromStorage();
             if (storedData && storedData.length > 0) {
                 currentData = storedData;
@@ -1336,6 +1336,53 @@
                 console.log('📂 Loaded initial data from localStorage:', storedData.length, 'sessions');
             } else {
                 console.log('📂 No stored data available');
+            }
+            
+            // Always fetch fresh data from API
+            fetchDataFromAPI();
+        }
+
+        // Fetch data from API
+        async function fetchDataFromAPI() {
+            try {
+                console.log('🔄 Fetching fresh data from API...');
+                const response = await fetch('/api/call/sessions');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.sessions && data.sessions.length > 0) {
+                    currentData = data.sessions;
+                    console.log('✅ Fetched data from API:', data.sessions.length, 'sessions');
+                    
+                    // Save to localStorage
+                    saveDataToStorage(currentData);
+                    
+                    // Update display
+                    updateStats();
+                    displaySessions();
+                    displayCustomers();
+                    displayAppointments();
+                    displayAnalytics();
+                } else {
+                    console.log('📭 No sessions returned from API');
+                }
+            } catch (error) {
+                console.error('❌ Error fetching data from API:', error);
+                // If API fails, keep using stored data if available
+                if (!currentData || currentData.length === 0) {
+                    document.getElementById('sessions-content').innerHTML = 
+                        '<div class="no-data">Error loading data. Please try again.</div>';
+                    document.getElementById('customers-content').innerHTML = 
+                        '<div class="no-data">Error loading data. Please try again.</div>';
+                    document.getElementById('appointments-content').innerHTML = 
+                        '<div class="no-data">Error loading data. Please try again.</div>';
+                    document.getElementById('analytics-content').innerHTML = 
+                        '<div class="no-data">Error loading data. Please try again.</div>';
+                }
             }
         }
 
