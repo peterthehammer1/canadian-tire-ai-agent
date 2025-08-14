@@ -92,10 +92,16 @@ app.get('/', (req, res) => {
       webhook: 'POST /api/webhook',
       appointments: 'GET /api/appointments',
       test: 'GET /api/test',
-      health: 'GET /health'
+      health: 'GET /health',
+      dashboard: 'GET /dashboard'
     },
     timestamp: new Date().toISOString()
   });
+});
+
+// Serve dashboard
+app.get('/dashboard', (req, res) => {
+  res.sendFile(__dirname + '/public/dashboard.html');
 });
 
 // Health check
