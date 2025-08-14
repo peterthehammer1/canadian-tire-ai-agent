@@ -1,13 +1,15 @@
 const express = require('express');
 const Airtable = require('airtable');
 
-// Airtable configuration
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
+// Airtable configuration - Updated for Personal Access Tokens
+const AIRTABLE_PERSONAL_ACCESS_TOKEN = process.env.AIRTABLE_PERSONAL_ACCESS_TOKEN;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const AIRTABLE_TABLE_NAME = 'Customers';
 
-// Initialize Airtable
-const base = new Airtable({ apiKey: AIRTABLE_API_KEY }).base(AIRTABLE_BASE_ID);
+// Initialize Airtable with Personal Access Token
+const base = new Airtable({ 
+  apiKey: AIRTABLE_PERSONAL_ACCESS_TOKEN 
+}).base(AIRTABLE_BASE_ID);
 
 // In-memory cache to combine data pieces (temporary until Airtable is set up)
 let customerDataCache = new Map(); // callId -> customerData
@@ -149,7 +151,7 @@ async function createCustomerRecord(customerData) {
 // Get all customers from Airtable
 app.get('/api/customers', async (req, res) => {
   try {
-    if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
+    if (!AIRTABLE_PERSONAL_ACCESS_TOKEN || !AIRTABLE_BASE_ID) {
       // Fallback to cache if Airtable not configured
       const customers = Array.from(customerDataCache.values())
         .filter(customer => customer.status === 'completed')
@@ -198,7 +200,7 @@ app.get('/api/status', (req, res) => {
     completed: Array.from(customerDataCache.values()).filter(c => c.status === 'completed').length,
     collecting: Array.from(customerDataCache.values()).filter(c => c.status === 'collecting').length,
     errors: Array.from(customerDataCache.values()).filter(c => c.status === 'error').length,
-    airtableConfigured: !!(AIRTABLE_API_KEY && AIRTABLE_BASE_ID)
+    airtableConfigured: !!(AIRTABLE_PERSONAL_ACCESS_TOKEN && AIRTABLE_BASE_ID)
   };
   
   res.json({
@@ -213,7 +215,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     service: 'Canadian Tire Airtable Webhook',
-    airtableConfigured: !!(AIRTABLE_API_KEY && AIRTABLE_BASE_ID),
+    airtableConfigured: !!(AIRTABLE_PERSONAL_ACCESS_TOKEN && AIRTABLE_BASE_ID),
     timestamp: new Date().toISOString()
   });
 });

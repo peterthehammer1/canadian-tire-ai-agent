@@ -52,12 +52,20 @@ This new system solves your data fragmentation problem by:
 - Click on "Status" field
 - Set options: `Pending`, `Confirmed`, `Completed`, `Cancelled`
 
-## 🔑 **Step 2: Get Airtable API Key**
+## 🔑 **Step 2: Get Airtable Personal Access Token**
 
-### **2.1 Generate API Key**
+### **2.1 Generate Personal Access Token**
 - Go to [airtable.com/account](https://airtable.com/account)
-- Click "Generate API key"
-- Copy the API key (starts with `key...`)
+- Click **"Personal access tokens"**
+- Click **"Create new token"**
+- **Name:** "ServiceDept" (or any name you prefer)
+- **Scopes needed:**
+  - ✅ `data.records:read` - "See the data in records"
+  - ✅ `data.records:write` - "Create, edit, and delete records"
+  - ✅ `webhook:manage` - "View, create, delete webhooks" (optional but recommended)
+- **Access:** Click "+ Add a base" and select your "Canadian Tire Service Appointments" base
+- Click **"Create token"**
+- **Copy the token** (starts with `pat_...`)
 
 ### **2.2 Get Base ID**
 - Open your base in Airtable
@@ -68,7 +76,7 @@ This new system solves your data fragmentation problem by:
 
 ### **3.1 Set Environment Variables**
 In your Vercel project, add these environment variables:
-- `AIRTABLE_API_KEY` = Your API key from step 2.1
+- `AIRTABLE_PERSONAL_ACCESS_TOKEN` = Your Personal Access Token from step 2.1 (starts with `pat_...`)
 - `AIRTABLE_BASE_ID` = Your Base ID from step 2.2
 
 ### **3.2 Deploy**
