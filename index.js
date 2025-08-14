@@ -95,6 +95,9 @@ app.post('/api/store-customer-data', (req, res) => {
     if (req.body.preferredDate) session.customerInfo.preferredDate = req.body.preferredDate;
     if (req.body.preferredTime) session.customerInfo.preferredTime = req.body.preferredTime;
     
+    // Save the updated session back to the Map
+    callSessionManager.sessions.set(callId, session);
+    
     console.log('✅ Customer data stored successfully:', callId);
     console.log('📝 Session data:', JSON.stringify(session, null, 2));
     
