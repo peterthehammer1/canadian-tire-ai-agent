@@ -251,12 +251,14 @@ class CallSessionManager {
         callId,
         sessionId: session.sessionId,
         startTime: session.startTime,
+        endTime: session.endTime || null,
         lastActivity: session.lastActivity,
         status: session.status,
         customerInfo: session.customerInfo,
         appointmentBooked: session.appointmentBooked,
         appointmentDetails: session.appointmentDetails,
         conversationLength: session.conversationHistory.length,
+        conversationHistory: session.conversationHistory,
         extractedData: session.extractedData
       });
     }

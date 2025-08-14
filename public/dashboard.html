@@ -470,6 +470,99 @@
             font-size: 1rem;
         }
 
+        /* Enhanced Call Session Styling */
+        .call-timeline {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .timeline-label {
+            color: #666;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        .timeline-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .timeline-value.duration {
+            color: #E31837;
+            font-weight: bold;
+        }
+
+        /* Enhanced Transcript Styling */
+        .transcript-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #E5E5E5;
+            border-radius: 8px;
+            background: #FAFAFA;
+        }
+
+        .transcript-item {
+            background: white;
+            padding: 15px;
+            margin: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #E31837;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .transcript-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #E5E5E5;
+        }
+
+        .transcript-timestamp {
+            color: #666;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .transcript-type {
+            background: #E31837;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .transcript-content {
+            color: #333;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        /* Call Duration Badge */
+        .duration-badge {
+            background: linear-gradient(135deg, #E31837 0%, #C41230 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
         /* New styles for appointment cards */
         .appointment-card {
             background: #F8F9FA;
@@ -786,6 +879,21 @@
                 const appointmentBadge = session.appointmentBooked ? 
                     '<span class="appointment-badge">✅ Booked</span>' : '';
                 
+                // Calculate call duration
+                const startTime = new Date(session.startTime);
+                const endTime = session.endTime ? new Date(session.endTime) : 
+                               (session.status === 'ended' ? new Date(session.lastActivity) : new Date());
+                const durationMs = endTime - startTime;
+                const durationMinutes = Math.floor(durationMs / (1000 * 60));
+                const durationSeconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+                const durationText = durationMinutes > 0 ? 
+                    `${durationMinutes}m ${durationSeconds}s` : 
+                    `${durationSeconds}s`;
+                
+                // Format timestamps
+                const startTimeFormatted = startTime.toLocaleString();
+                const endTimeFormatted = session.endTime ? new Date(session.endTime).toLocaleString() : 'Ongoing';
+                
                 const customerInfoHtml = Object.entries(session.customerInfo).map(([key, value]) => {
                     const displayKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
                     const displayValue = value || 'Not provided';
@@ -835,13 +943,46 @@
                     </div>
                 ` : '';
 
+                // Enhanced conversation history with transcript
+                const conversationHtml = session.conversationHistory && session.conversationHistory.length > 0 ? `
+                    <div class="conversation-preview">
+                        <h4>💬 Call Transcript (${session.conversationLength} entries)</h4>
+                        <div class="transcript-container">
+                            ${session.conversationHistory.map((entry, index) => `
+                                <div class="transcript-item">
+                                    <div class="transcript-header">
+                                        <span class="transcript-timestamp">${new Date(entry.timestamp).toLocaleTimeString()}</span>
+                                        <span class="transcript-type">${entry.type || 'message'}</span>
+                                    </div>
+                                    <div class="transcript-content">${entry.content}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : '<div class="conversation-preview"><h4>💬 Call Transcript</h4><div style="color: #999; font-style: italic;">No conversation history available</div></div>';
+
                 return `
                     <div class="session-card">
                         <div class="session-header">
                             <div>
                                 <div class="session-id">Call ID: ${session.callId}</div>
-                                <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
-                                    Started: ${new Date(session.startTime).toLocaleString()}
+                                <div class="call-timeline">
+                                    <div class="timeline-item">
+                                        <span class="timeline-label">Started:</span>
+                                        <span class="timeline-value">${startTimeFormatted}</span>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <span class="timeline-label">Ended:</span>
+                                        <span class="timeline-value">${endTimeFormatted}</span>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <span class="timeline-label">Duration:</span>
+                                        <span class="timeline-value duration">${durationText}</span>
+                                    </div>
+                                    <div class="timeline-item">
+                                        <span class="timeline-label">Status:</span>
+                                        <span class="timeline-value">${session.status.toUpperCase()}</span>
+                                    </div>
                                 </div>
                             </div>
                             <div style="text-align: right;">
@@ -860,18 +1001,7 @@
                         
                         ${extractedDataHtml}
                         
-                        <div class="conversation-preview">
-                            <h4>💬 Conversation History (${session.conversationLength} entries)</h4>
-                            ${session.conversationHistory && session.conversationHistory.length > 0 ? 
-                                session.conversationHistory.slice(-3).map(entry => `
-                                    <div class="transcript-item">
-                                        <div class="transcript-timestamp">${new Date(entry.timestamp).toLocaleTimeString()}</div>
-                                        <div class="transcript-content">${entry.content}</div>
-                                    </div>
-                                `).join('') : 
-                                '<div style="color: #999; font-style: italic;">No conversation history available</div>'
-                            }
-                        </div>
+                        ${conversationHtml}
                     </div>
                 `;
             }).join('');
