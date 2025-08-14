@@ -602,20 +602,23 @@ app.post('/webhook/ai', async (req, res) => {
         session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
         console.log('🆕 Creating new session for phone:', req.body.phone);
         
-        // Set complete customer info
-        session.customerInfo = {
-          name: req.body.name || null,
-          phone: req.body.phone || null,
-          email: req.body.email || null,
-          carMake: req.body.carMake || null,
-          carModel: req.body.carModel || null,
-          carYear: req.body.carYear || null,
-          serviceType: req.body.serviceType || null,
-          triangleMember: req.body.triangleMember || null,
-          location: req.body.location || null,
-          preferredDate: req.body.preferredDate || null,
-          preferredTime: req.body.preferredTime || null
-        };
+              // Set complete customer info
+      session.customerInfo = {
+        name: req.body.name || null,
+        phone: req.body.phone || null,
+        email: req.body.email || null,
+        carMake: req.body.carMake || null,
+        carModel: req.body.carModel || null,
+        carYear: req.body.carYear || null,
+        serviceType: req.body.serviceType || null,
+        triangleMember: req.body.triangleMember || null,
+        location: req.body.location || null,
+        preferredDate: req.body.preferredDate || null,
+        preferredTime: req.body.preferredTime || null
+      };
+      
+      console.log('🔍 Debug - Session after setting customer info:', JSON.stringify(session, null, 2));
+      console.log('🔍 Debug - Customer info set:', JSON.stringify(session.customerInfo, null, 2));
       }
       
       // Check if we have enough info to book an appointment
