@@ -577,20 +577,18 @@ app.post('/webhook/ai', async (req, res) => {
         session = existingSession;
         console.log('🔄 Updating existing session for phone:', req.body.phone);
         
-        // Clear existing customer info and replace with complete data
-        session.customerInfo = {
-          name: req.body.name || null,
-          phone: req.body.phone || session.customerInfo.phone || null,
-          email: req.body.email || null,
-          carMake: req.body.carMake || null,
-          carModel: req.body.carModel || null,
-          carYear: req.body.carYear || null,
-          serviceType: req.body.serviceType || null,
-          triangleMember: req.body.triangleMember || null,
-          location: req.body.location || null,
-          preferredDate: req.body.preferredDate || null,
-          preferredTime: req.body.preferredTime || null
-        };
+        // Update existing session with complete data using updateCustomerInfo method
+        if (req.body.name) callSessionManager.updateCustomerInfo(callId, 'name', req.body.name);
+        if (req.body.phone) callSessionManager.updateCustomerInfo(callId, 'phone', req.body.phone);
+        if (req.body.email) callSessionManager.updateCustomerInfo(callId, 'email', req.body.email);
+        if (req.body.carMake) callSessionManager.updateCustomerInfo(callId, 'carMake', req.body.carMake);
+        if (req.body.carModel) callSessionManager.updateCustomerInfo(callId, 'carModel', req.body.carModel);
+        if (req.body.carYear) callSessionManager.updateCustomerInfo(callId, 'carYear', req.body.carYear);
+        if (req.body.serviceType) callSessionManager.updateCustomerInfo(callId, 'serviceType', req.body.serviceType);
+        if (req.body.triangleMember !== undefined) callSessionManager.updateCustomerInfo(callId, 'triangleMember', req.body.triangleMember);
+        if (req.body.location) callSessionManager.updateCustomerInfo(callId, 'location', req.body.location);
+        if (req.body.preferredDate) callSessionManager.updateCustomerInfo(callId, 'preferredDate', req.body.preferredDate);
+        if (req.body.preferredTime) callSessionManager.updateCustomerInfo(callId, 'preferredTime', req.body.preferredTime);
         
         // Update last activity
         session.lastActivity = new Date().toISOString();
@@ -602,23 +600,20 @@ app.post('/webhook/ai', async (req, res) => {
         session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
         console.log('🆕 Creating new session for phone:', req.body.phone);
         
-              // Set complete customer info
-      session.customerInfo = {
-        name: req.body.name || null,
-        phone: req.body.phone || session.customerInfo.phone || null,
-        email: req.body.email || null,
-        carMake: req.body.carMake || null,
-        carModel: req.body.carModel || null,
-        carYear: req.body.carYear || null,
-        serviceType: req.body.serviceType || null,
-        triangleMember: req.body.triangleMember || null,
-        location: req.body.location || null,
-        preferredDate: req.body.preferredDate || null,
-        preferredTime: req.body.preferredTime || null
-      };
+              // Set complete customer info using updateCustomerInfo method
+      if (req.body.name) callSessionManager.updateCustomerInfo(callId, 'name', req.body.name);
+      if (req.body.phone) callSessionManager.updateCustomerInfo(callId, 'phone', req.body.phone);
+      if (req.body.email) callSessionManager.updateCustomerInfo(callId, 'email', req.body.email);
+      if (req.body.carMake) callSessionManager.updateCustomerInfo(callId, 'carMake', req.body.carMake);
+      if (req.body.carModel) callSessionManager.updateCustomerInfo(callId, 'carModel', req.body.carModel);
+      if (req.body.carYear) callSessionManager.updateCustomerInfo(callId, 'carYear', req.body.carYear);
+      if (req.body.serviceType) callSessionManager.updateCustomerInfo(callId, 'serviceType', req.body.serviceType);
+      if (req.body.triangleMember !== undefined) callSessionManager.updateCustomerInfo(callId, 'triangleMember', req.body.triangleMember);
+      if (req.body.location) callSessionManager.updateCustomerInfo(callId, 'location', req.body.location);
+      if (req.body.preferredDate) callSessionManager.updateCustomerInfo(callId, 'preferredDate', req.body.preferredDate);
+      if (req.body.preferredTime) callSessionManager.updateCustomerInfo(callId, 'preferredTime', req.body.preferredTime);
       
-      console.log('🔍 Debug - Session after setting customer info:', JSON.stringify(session, null, 2));
-      console.log('🔍 Debug - Customer info set:', JSON.stringify(session.customerInfo, null, 2));
+      console.log('🔍 Debug - Customer info updated using updateCustomerInfo method');
       }
       
       // Check if we have enough info to book an appointment
