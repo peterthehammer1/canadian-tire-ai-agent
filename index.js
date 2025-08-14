@@ -464,6 +464,12 @@ app.post('/webhook/ai', async (req, res) => {
     console.log(`📊 Extracted - Data:`, JSON.stringify(data, null, 2));
     
     // Check for customer data first (before event_type checks)
+    console.log('🔍 Debug - Checking for customer data...');
+    console.log('🔍 Debug - req.body.serviceType:', req.body.serviceType);
+    console.log('🔍 Debug - req.body.name:', req.body.name);
+    console.log('🔍 Debug - req.body.phone:', req.body.phone);
+    console.log('🔍 Debug - Condition result:', !!(req.body.serviceType || req.body.name || req.body.phone));
+    
     if (req.body.serviceType || req.body.name || req.body.phone) {
       // Handle complete customer data from Retell AI (single webhook call)
       console.log('🔧 Complete customer data received from Retell AI');
