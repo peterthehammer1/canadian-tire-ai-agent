@@ -463,117 +463,30 @@ app.post('/webhook/ai', async (req, res) => {
     console.log(`🎯 Extracted - Event Type: ${event_type}`);
     console.log(`📊 Extracted - Data:`, JSON.stringify(data, null, 2));
     
-    // Check for customer data first (before event_type checks)
-    console.log('🔍 Debug - Checking for customer data...');
-    console.log('🔍 Debug - req.body.serviceType:', req.body.serviceType);
-    console.log('🔍 Debug - req.body.name:', req.body.name);
-    console.log('🔍 Debug - req.body.phone:', req.body.phone);
-    console.log('🔍 Debug - Condition result:', !!(req.body.serviceType || req.body.name || req.body.phone));
-    
-    if (req.body.serviceType || req.body.name || req.body.phone) {
-      // Handle complete customer data from Retell AI (single webhook call)
-      console.log('🔧 Complete customer data received from Retell AI');
-      console.log('📊 Data:', JSON.stringify(req.body, null, 2));
-      console.log('🔍 Debug - Reached the customer data processing path');
-      console.log('🔍 Debug - req.body.serviceType:', req.body.serviceType);
-      console.log('🔍 Debug - req.body.name:', req.body.name);
-      console.log('🔍 Debug - req.body.phone:', req.body.phone);
+    // Simple customer data handling - create session and store data directly
+    if (req.body.name || req.body.phone || req.body.serviceType) {
+      console.log('🔧 Customer data received:', JSON.stringify(req.body, null, 2));
       
-      // Check if this is a valid customer record (at least name and phone)
-      const hasValidData = req.body.name && req.body.phone;
+      // Create a new session
+      const callId = 'retell-' + Date.now();
+      const session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
       
-      if (!hasValidData) {
-        console.log('⚠️ Invalid data received, skipping webhook processing');
-        res.json({ success: true, message: 'Invalid data, skipping' });
-        return;
-      }
+      // Store all the data directly in the session
+      if (req.body.name) session.customerInfo.name = req.body.name;
+      if (req.body.phone) session.customerInfo.phone = req.body.phone;
+      if (req.body.email) session.customerInfo.email = req.body.email;
+      if (req.body.carMake) session.customerInfo.carMake = req.body.carMake;
+      if (req.body.carModel) session.customerInfo.carModel = req.body.carModel;
+      if (req.body.carYear) session.customerInfo.carYear = req.body.carYear;
+      if (req.body.serviceType) session.customerInfo.serviceType = req.body.serviceType;
+      if (req.body.triangleMember !== undefined) session.customerInfo.triangleMember = req.body.triangleMember;
+      if (req.body.location) session.customerInfo.location = req.body.location;
+      if (req.body.preferredDate) session.customerInfo.preferredDate = req.body.preferredDate;
+      if (req.body.preferredTime) session.customerInfo.preferredTime = req.body.preferredTime;
       
-      // Try to find existing session by phone number to prevent duplicates
-      let existingSession = null;
-      let existingCallId = null;
-      
-      if (req.body.phone && req.body.phone !== 'unknown') {
-        const allSessions = callSessionManager.getAllSessions();
-        console.log('🔍 Looking for existing session with phone:', req.body.phone);
-        
-        for (const session of allSessions) {
-          if (session.customerInfo.phone === req.body.phone) {
-            existingSession = session;
-            existingCallId = session.callId;
-            console.log('✅ Found existing session:', existingCallId);
-            break;
-          }
-        }
-      }
-      
-      let callId, session;
-      
-      if (existingSession) {
-        // Update existing session with complete data
-        callId = existingCallId;
-        session = existingSession;
-        console.log('🔄 Updating existing session for phone:', req.body.phone);
-        
-        // Update existing session with complete data using updateCustomerInfo method
-        if (req.body.name) callSessionManager.updateCustomerInfo(callId, 'name', req.body.name);
-        if (req.body.phone) callSessionManager.updateCustomerInfo(callId, 'phone', req.body.phone);
-        if (req.body.email) callSessionManager.updateCustomerInfo(callId, 'email', req.body.email);
-        if (req.body.carMake) callSessionManager.updateCustomerInfo(callId, 'carMake', req.body.carMake);
-        if (req.body.carModel) callSessionManager.updateCustomerInfo(callId, 'carModel', req.body.carModel);
-        if (req.body.carYear) callSessionManager.updateCustomerInfo(callId, 'carYear', req.body.carYear);
-        if (req.body.serviceType) callSessionManager.updateCustomerInfo(callId, 'serviceType', req.body.serviceType);
-        if (req.body.triangleMember !== undefined) callSessionManager.updateCustomerInfo(callId, 'triangleMember', req.body.triangleMember);
-        if (req.body.location) callSessionManager.updateCustomerInfo(callId, 'location', req.body.location);
-        if (req.body.preferredDate) callSessionManager.updateCustomerInfo(callId, 'preferredDate', req.body.preferredDate);
-        if (req.body.preferredTime) callSessionManager.updateCustomerInfo(callId, 'preferredTime', req.body.preferredTime);
-        
-        // Update last activity
-        session.lastActivity = new Date().toISOString();
-        
-        console.log('✅ Updated existing session with complete data');
-      } else {
-        // Create new session with complete data
-        callId = 'retell-complete-' + Date.now();
-        session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
-        console.log('🆕 Creating new session for phone:', req.body.phone);
-        
-        // Set complete customer info using updateCustomerInfo method
-        if (req.body.name) callSessionManager.updateCustomerInfo(callId, 'name', req.body.name);
-        if (req.body.phone) callSessionManager.updateCustomerInfo(callId, 'phone', req.body.phone);
-        if (req.body.email) callSessionManager.updateCustomerInfo(callId, 'email', req.body.email);
-        if (req.body.carMake) callSessionManager.updateCustomerInfo(callId, 'carMake', req.body.carMake);
-        if (req.body.carModel) callSessionManager.updateCustomerInfo(callId, 'carModel', req.body.carModel);
-        if (req.body.carYear) callSessionManager.updateCustomerInfo(callId, 'carYear', req.body.carYear);
-        if (req.body.serviceType) callSessionManager.updateCustomerInfo(callId, 'serviceType', req.body.serviceType);
-        if (req.body.triangleMember !== undefined) callSessionManager.updateCustomerInfo(callId, 'triangleMember', req.body.triangleMember);
-        if (req.body.location) callSessionManager.updateCustomerInfo(callId, 'location', req.body.location);
-        if (req.body.preferredDate) callSessionManager.updateCustomerInfo(callId, 'preferredDate', req.body.preferredDate);
-        if (req.body.preferredTime) callSessionManager.updateCustomerInfo(callId, 'preferredTime', req.body.preferredTime);
-        
-        console.log('🔍 Debug - Customer info updated using updateCustomerInfo method');
-      }
-      
-      // Check if we have enough info to book an appointment
-      const customerInfo = session.customerInfo;
-      const hasRequiredInfo = customerInfo.name && customerInfo.phone && 
-                             customerInfo.serviceType && customerInfo.location &&
-                             customerInfo.preferredDate && customerInfo.preferredTime;
-      
-      if (hasRequiredInfo && !session.appointmentBooked) {
-        console.log('✅ All required info collected, ready to book appointment');
-        session.appointmentBooked = true;
-        session.appointmentDetails = {
-          date: customerInfo.preferredDate,
-          time: customerInfo.preferredTime,
-          service: customerInfo.serviceType,
-          location: customerInfo.location
-        };
-        console.log('📅 Appointment marked as booked');
-      }
-      
-      console.log('✅ Complete customer data processed for call:', callId);
-      console.log('📝 Final customer info:', session.customerInfo);
-      console.log('📅 Appointment status:', session.appointmentBooked ? 'Booked' : 'Incomplete');
+      console.log('✅ Session created with data:', callId);
+      console.log('📝 Customer info stored:', session.customerInfo);
+    }
     } else if (event_type === 'call_started' || event_type === 'start') {
       // Create a new call session
       const callId = data.call_id || data.callId || data.id;
