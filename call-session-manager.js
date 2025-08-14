@@ -41,9 +41,16 @@ class CallSessionManager {
   updateCustomerInfo(callId, field, value) {
     const session = this.sessions.get(callId);
     if (session) {
+      console.log(`🔍 Debug - Before update: ${field} = ${session.customerInfo[field]}`);
       session.customerInfo[field] = value;
       session.lastActivity = new Date();
       console.log(`📝 Updated ${field}: ${value} for call ${callId}`);
+      console.log(`🔍 Debug - After update: ${field} = ${session.customerInfo[field]}`);
+      
+      // Verify the update was stored in the Map
+      const storedSession = this.sessions.get(callId);
+      console.log(`🔍 Debug - Stored session ${field}: ${storedSession.customerInfo[field]}`);
+      
       return true;
     }
     return false;
