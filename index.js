@@ -1,5 +1,6 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const GoogleSheetsManager = require('./google-sheets');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -8,16 +9,17 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
-// Simple in-memory storage
-const sessions = new Map();
+// Initialize Google Sheets manager
+const googleSheets = new GoogleSheetsManager();
 
-// Simple CallSessionManager
+// Simple CallSessionManager with Google Sheets integration
 class SimpleCallSessionManager {
   constructor() {
     this.sessions = new Map();
+    this.googleSheets = googleSheets;
   }
 
-  createSession(callId, customerPhone) {
+  async createSession(callId, customerPhone) {
     const session = {
       callId,
       customerPhone,
@@ -42,6 +44,14 @@ class SimpleCallSessionManager {
     };
 
     this.sessions.set(callId, session);
+    
+    // Save to Google Sheets
+    try {
+      await this.googleSheets.saveCustomerData(session.customerInfo);
+    } catch (error) {
+      console.error('⚠️ Warning: Failed to save to Google Sheets:', error);
+    }
+    
     console.log(`📞 New call session created: ${callId}`);
     return session;
   }
@@ -74,13 +84,13 @@ app.get('/api/call/sessions', (req, res) => {
 });
 
 // Store customer data endpoint
-app.post('/api/store-customer-data', (req, res) => {
+app.post('/api/store-customer-data', async (req, res) => {
   try {
     console.log('🔧 Storing customer data:', JSON.stringify(req.body, null, 2));
     
     // Create a new session
     const callId = 'customer-' + Date.now();
-    const session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
+    const session = await callSessionManager.createSession(callId, req.body.phone || 'unknown');
     
     // Store all the data directly in the session object
     if (req.body.name) session.customerInfo.name = req.body.name;
@@ -97,6 +107,14 @@ app.post('/api/store-customer-data', (req, res) => {
     
     // Save the updated session back to the Map
     callSessionManager.sessions.set(callId, session);
+    
+    // Save to Google Sheets
+    try {
+      const sheetsResult = await googleSheets.saveCustomerData(session.customerInfo);
+      console.log('📊 Google Sheets result:', sheetsResult);
+    } catch (error) {
+      console.error('⚠️ Warning: Failed to save to Google Sheets:', error);
+    }
     
     console.log('✅ Customer data stored successfully:', callId);
     console.log('📝 Session data:', JSON.stringify(session, null, 2));
