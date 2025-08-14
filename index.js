@@ -409,17 +409,28 @@ app.post('/api/call/end', (req, res) => {
   }
 });
 
+// Get all call sessions
 app.get('/api/call/sessions', (req, res) => {
   try {
-    const sessions = callSessionManager.getAllSessions(); // Changed from getAllActiveSessions() to getAllSessions()
-    res.json({ 
-      success: true, 
-      sessions,
-      count: sessions.length,
-      message: 'All sessions retrieved successfully'
+    console.log('📞 API: /api/call/sessions called');
+    
+    const allSessions = callSessionManager.getAllSessions();
+    console.log('📊 API: Total sessions in manager:', allSessions.length);
+    console.log('📋 API: Session IDs:', allSessions.map(s => s.callId));
+    
+    if (allSessions.length === 0) {
+      console.log('⚠️ API: No sessions found in manager');
+    }
+    
+    res.json({
+      success: true,
+      sessions: allSessions,
+      count: allSessions.length,
+      message: allSessions.length > 0 ? 'All sessions retrieved successfully' : 'No sessions found'
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('❌ API Error:', error);
+    res.status(500).json({ error: 'Failed to retrieve sessions' });
   }
 });
 
@@ -666,8 +677,15 @@ app.post('/api/test/create-session', (req, res) => {
 // Test endpoint to get all sessions (for debugging)
 app.get('/api/test/sessions', (req, res) => {
   try {
+    console.log('🧪 Test endpoint - /api/test/sessions called');
+    
     const allSessions = callSessionManager.getAllSessions();
-    console.log('🧪 Test endpoint - Total sessions:', allSessions.length);
+    console.log('🧪 Test endpoint - Total sessions in manager:', allSessions.length);
+    console.log('🧪 Test endpoint - Session IDs:', allSessions.map(s => s.callId));
+    
+    if (allSessions.length === 0) {
+      console.log('⚠️ Test endpoint - No sessions found in manager');
+    }
     
     res.json({ 
       success: true, 
@@ -676,7 +694,7 @@ app.get('/api/test/sessions', (req, res) => {
       sessionIds: allSessions.map(s => s.callId)
     });
   } catch (error) {
-    console.error('❌ Error getting test sessions:', error);
+    console.error('❌ Test endpoint Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -684,7 +702,7 @@ app.get('/api/test/sessions', (req, res) => {
 // Cleanup endpoint to remove duplicate sessions and consolidate data
 app.post('/api/cleanup-duplicates', (req, res) => {
   try {
-    console.log('🧹 Starting duplicate cleanup...');
+    console.log('�� Starting duplicate cleanup...');
     
     const allSessions = callSessionManager.getAllSessions();
     console.log('📊 Total sessions before cleanup:', allSessions.length);
