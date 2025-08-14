@@ -1,210 +1,127 @@
-# Canadian Tire AI Customer Service Agent
+# 🚗 Canadian Tire Service Appointments
 
-An intelligent AI-powered customer service agent that helps customers book automotive service appointments at Canadian Tire locations.
+A simple, clean appointment booking system for Canadian Tire service department.
 
-## 🚗 Features
+## ✨ Features
 
-- **Intelligent Appointment Booking**: AI agent collects all required information and books service appointments
-- **Service Types Supported**:
-  - Oil Change (45 min + 15 min wrap-up)
-  - Seasonal Tire Rotation (45 min + 15 min wrap-up)
-  - General Check-up/Repair (45 min + 15 min wrap-up)
-- **Smart Scheduling**: Automatically finds available time slots based on business hours
-- **Customer Information Collection**: Gathers all necessary details for service booking
-- **Roadside Assistance Promotion**: Ends every call with a reminder about Canadian Tire's roadside assistance program
+- **Customer Information Display** - Shows customer details, car information, and service requests
+- **Appointment Calendar** - Calendar view of all booked appointments
+- **Webhook Integration** - Receives appointment data from Retell AI
+- **Simple Dashboard** - Clean, focused interface
 
-## 📋 Required Customer Information
+## 🚀 Quick Start
 
-The AI agent collects the following information during each call:
+### Local Development
 
-1. **Canadian Tire location** (city/store)
-2. **Full Name**
-3. **Phone Number**
-4. **Email**
-5. **Car Make**
-6. **Car Model**
-7. **Car Year**
-8. **Service type** (Oil Change, Seasonal Tire Rotation, or General Check-up/Repair)
-9. **Loyalty program membership status**
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-## 🕒 Business Hours & Scheduling
+2. **Start the server:**
+   ```bash
+   npm start
+   ```
 
-- **Service Hours**: 8:00 AM - 5:00 PM
-- **Last Appointment**: 4:00 PM
-- **Appointment Duration**: 45 minutes service + 15 minutes wrap-up = 1 hour total
-- **Available Time Slots**: 8:00 AM, 9:00 AM, 10:00 AM, 11:00 AM, 12:00 PM, 1:00 PM, 2:00 PM, 3:00 PM, 4:00 PM
+3. **Open dashboard:**
+   ```
+   http://localhost:3000/dashboard.html
+   ```
 
-## 🛠️ Technical Requirements
+### Vercel Deployment
 
-- Node.js 16+ 
-- npm or yarn
-- AI service API key
+1. **Push to GitHub:**
+   ```bash
+   git add .
+   git commit -m "Simple appointment system"
+   git push origin main
+   ```
 
-## 🚀 Installation & Setup
+2. **Deploy automatically** via Vercel GitHub integration
 
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd canadian-tire-ai-agent
+## 🔗 API Endpoints
+
+- **`POST /api/webhook`** - Receives appointment data from Retell AI
+- **`GET /api/appointments`** - Returns all appointments
+- **`GET /health`** - Health check endpoint
+
+## 📱 Webhook Data Format
+
+Send appointment data to `/api/webhook`:
+
+```json
+{
+  "name": "John Doe",
+  "phone": "555-123-4567",
+  "email": "john@example.com",
+  "carMake": "Toyota",
+  "carModel": "Camry",
+  "carYear": "2020",
+  "serviceType": "Oil Change",
+  "location": "Downtown Toronto",
+  "preferredDate": "2024-01-15",
+  "preferredTime": "10:00 AM"
+}
 ```
 
-### 2. Install Dependencies
-```bash
-npm install
+## 🎯 What This System Does
+
+1. **Receives webhook data** from Retell AI when customers book appointments
+2. **Stores appointment information** in memory (simple, reliable)
+3. **Displays customer details** in an organized dashboard
+4. **Shows appointment calendar** with dates and times
+5. **Auto-refreshes** every 30 seconds
+
+## 🗂️ File Structure
+
+```
+├── app.js                 # Main server file
+├── public/
+│   └── dashboard.html    # Dashboard interface
+├── package.json          # Dependencies
+├── vercel.json          # Vercel configuration
+└── README.md            # This file
 ```
 
-### 3. Environment Configuration
-Copy the environment template and add your API key:
-```bash
-cp env.example .env
+## 🔧 Configuration
+
+### Retell AI Webhook URL
+
+Set your webhook URL in Retell AI to:
+```
+https://your-domain.vercel.app/api/webhook
 ```
 
-Edit `.env` and add your API key:
-```env
-API_KEY=your_actual_api_key_here
-PORT=3001
-NODE_ENV=development
-```
+### Environment Variables
 
-### 4. Start the Application
-```bash
-# Development mode with auto-restart
-npm run dev
+No environment variables required - this is a simple, self-contained system.
 
-# Production mode
-npm start
-```
+## 📊 Dashboard Features
 
-The application will be available at `http://localhost:3001`
+- **Statistics Cards** - Total appointments, today's count, confirmed/pending
+- **Customer List** - All customer information and car details
+- **Calendar View** - Appointments organized by date and time
+- **Auto-refresh** - Updates every 30 seconds
 
-## 📡 API Endpoints
+## 🚨 Important Notes
 
-### Appointment Management
-- `POST /api/check-availability` - Check available appointment slots
-- `POST /api/book-appointment` - Book a new appointment
-- `GET /api/appointments` - Get all appointments (with optional filters)
-- `GET /api/appointments/:id` - Get specific appointment
-- `PUT /api/appointments/:id` - Update appointment
-- `DELETE /api/appointments/:id` - Cancel appointment
+- **In-memory storage** - Data is lost on server restart
+- **Simple design** - Focused on functionality, not complex features
+- **Vercel compatible** - Designed for serverless deployment
+- **No external databases** - Self-contained for reliability
 
-### Information & Statistics
-- `GET /api/service-types` - Get available service types
-- `GET /api/business-hours` - Get business hours
-- `GET /api/statistics` - Get appointment statistics for a date/location
-- `GET /health` - Health check endpoint
+## 🆘 Troubleshooting
 
-### AI Integration
-- `POST /webhook/ai` - Webhook endpoint for AI service events
+### Dashboard not loading data
+- Check that the server is running
+- Verify webhook endpoint is accessible
+- Check browser console for errors
 
-## 🤖 AI Agent Configuration
+### Webhook not receiving data
+- Verify Retell AI webhook URL is correct
+- Check server logs for incoming requests
+- Ensure data format matches expected schema
 
-The AI agent is configured through `agent-config.json` and includes:
+## 📞 Support
 
-- **Voice**: Professional female voice (en-US-Neural2-F)
-- **Language**: English (US)
-- **Initial Message**: Welcoming greeting
-- **Detailed Prompt**: Comprehensive instructions for appointment booking
-
-## 📱 Usage Examples
-
-### Check Availability
-```bash
-curl -X POST http://localhost:3001/api/check-availability \
-  -H "Content-Type: application/json" \
-  -d '{
-    "date": "2024-01-15",
-    "location": "Toronto Downtown",
-    "serviceType": "oil_change"
-  }'
-```
-
-### Book Appointment
-```bash
-curl -X POST http://localhost:3001/api/book-appointment \
-  -H "Content-Type: application/json" \
-  -d '{
-    "location": "Toronto Downtown",
-    "fullName": "John Doe",
-    "phoneNumber": "416-555-0123",
-    "email": "john.doe@email.com",
-    "carMake": "Toyota",
-    "carModel": "Camry",
-    "carYear": "2020",
-    "serviceType": "oil_change",
-    "loyaltyMember": true,
-    "date": "2024-01-15",
-    "time": "10:00"
-  }'
-```
-
-## 🔧 Customization
-
-### Adding New Service Types
-Edit `appointment-manager.js` and add new service types to the `serviceTypes` object:
-
-```javascript
-this.serviceTypes = {
-  'oil_change': { name: 'Oil Change', duration: 45, wrapUp: 15 },
-  'tire_rotation': { name: 'Seasonal Tire Rotation', duration: 45, wrapUp: 15 },
-  'general_service': { name: 'General Check-up/Repair', duration: 45, wrapUp: 15 },
-  'brake_service': { name: 'Brake Service', duration: 90, wrapUp: 15 } // New service
-};
-```
-
-### Modifying Business Hours
-Update the `businessHours` object in `appointment-manager.js`:
-
-```javascript
-this.businessHours = {
-  start: '07:00',  // Earlier start time
-  end: '18:00',    // Later end time
-  lastAppointment: '17:00'  // Last appointment time
-};
-```
-
-## 🗄️ Data Storage
-
-Currently, the application uses in-memory storage for appointments. For production use, consider implementing:
-
-- **Database**: PostgreSQL, MongoDB, or MySQL
-- **Caching**: Redis for session management
-- **File Storage**: For customer documents and service records
-
-## 🚨 Production Considerations
-
-1. **Security**: Implement proper authentication and authorization
-2. **Rate Limiting**: Add API rate limiting to prevent abuse
-3. **Logging**: Implement comprehensive logging and monitoring
-4. **Error Handling**: Add proper error handling and user feedback
-5. **Database**: Replace in-memory storage with persistent database
-6. **SSL**: Use HTTPS in production
-7. **Environment Variables**: Secure all sensitive configuration
-
-## 📞 AI Integration
-
-The agent integrates with AI services for:
-
-- **Voice Calls**: Handle customer service calls
-- **Natural Language Processing**: Understand customer requests
-- **Appointment Management**: Seamlessly book appointments
-- **Customer Interaction**: Professional and helpful service
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🆘 Support
-
-For technical support or questions about the Canadian Tire AI agent, please contact the development team.
-
----
-
-**Note**: This is a demonstration project. For production use with Canadian Tire, ensure compliance with all company policies, data protection regulations, and security requirements.
+This is a simple, focused system. If you need additional features or encounter issues, the system is designed to be easy to modify and extend.
