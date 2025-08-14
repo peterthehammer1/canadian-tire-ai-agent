@@ -531,7 +531,7 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('🔧 Direct function data received from Retell AI');
       console.log('📊 Data:', JSON.stringify(req.body, null, 2));
       
-      // Try to find existing session by phone number
+      // Try to find existing session by phone number to prevent duplicates
       let existingSession = null;
       let existingCallId = null;
       
@@ -555,23 +555,35 @@ app.post('/webhook/ai', async (req, res) => {
       let callId, session;
       
       if (existingSession) {
-        // Update existing session
+        // Update existing session instead of creating a new one
         callId = existingCallId;
         session = existingSession;
         console.log('🔄 Updating existing session for phone:', req.body.phone);
+        
+        // Update the existing session with new data
+        Object.entries(req.body).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+            callSessionManager.updateCustomerInfo(callId, key, value);
+          }
+        });
+        
+        // Update last activity
+        session.lastActivity = new Date().toISOString();
+        
+        console.log('✅ Updated existing session with new data');
       } else {
-        // Create new session
+        // Create new session only if no existing session found
         callId = 'retell-function-' + Date.now();
         session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
         console.log('🆕 Creating new session for phone:', req.body.phone);
+        
+        // Update session with all the data
+        Object.entries(req.body).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '') {
+            callSessionManager.updateCustomerInfo(callId, key, value);
+          }
+        });
       }
-      
-      // Update session with all the data
-      Object.entries(req.body).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          callSessionManager.updateCustomerInfo(callId, key, value);
-        }
-      });
       
       // Check if we have enough info to book an appointment
       const customerInfo = session.customerInfo;
@@ -665,6 +677,79 @@ app.get('/api/test/sessions', (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error getting test sessions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Cleanup endpoint to remove duplicate sessions and consolidate data
+app.post('/api/cleanup-duplicates', (req, res) => {
+  try {
+    console.log('🧹 Starting duplicate cleanup...');
+    
+    const allSessions = callSessionManager.getAllSessions();
+    console.log('📊 Total sessions before cleanup:', allSessions.length);
+    
+    // Group sessions by phone number
+    const sessionsByPhone = {};
+    allSessions.forEach(session => {
+      const phone = session.customerInfo.phone;
+      if (phone && phone !== 'unknown') {
+        if (!sessionsByPhone[phone]) {
+          sessionsByPhone[phone] = [];
+        }
+        sessionsByPhone[phone].push(session);
+      }
+    });
+    
+    // Find and remove duplicates
+    let duplicatesRemoved = 0;
+    Object.entries(sessionsByPhone).forEach(([phone, sessions]) => {
+      if (sessions.length > 1) {
+        console.log(`📱 Found ${sessions.length} sessions for phone ${phone}`);
+        
+        // Sort by lastActivity to keep the most recent/complete one
+        sessions.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+        
+        // Keep the first (most recent) session and merge data from others
+        const keepSession = sessions[0];
+        console.log(`✅ Keeping session: ${keepSession.callId}`);
+        
+        // Merge data from other sessions
+        for (let i = 1; i < sessions.length; i++) {
+          const duplicateSession = sessions[i];
+          console.log(`🔄 Merging data from duplicate: ${duplicateSession.callId}`);
+          
+          // Merge customer info
+          Object.entries(duplicateSession.customerInfo).forEach(([key, value]) => {
+            if (value && value !== null && value !== undefined && value !== '') {
+              if (!keepSession.customerInfo[key] || keepSession.customerInfo[key] === null) {
+                keepSession.customerInfo[key] = value;
+                console.log(`📝 Merged ${key}: ${value}`);
+              }
+            }
+          });
+          
+          // Remove the duplicate session
+          callSessionManager.removeSession(duplicateSession.callId);
+          duplicatesRemoved++;
+        }
+      }
+    });
+    
+    const finalSessions = callSessionManager.getAllSessions();
+    console.log('✅ Cleanup completed!');
+    console.log('📊 Sessions removed:', duplicatesRemoved);
+    console.log('📊 Total sessions after cleanup:', finalSessions.length);
+    
+    res.json({ 
+      success: true, 
+      message: 'Duplicate cleanup completed',
+      duplicatesRemoved,
+      totalSessionsBefore: allSessions.length,
+      totalSessionsAfter: finalSessions.length
+    });
+  } catch (error) {
+    console.error('❌ Error during cleanup:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -396,6 +396,16 @@ class CallSessionManager {
     return false;
   }
 
+  removeSession(callId) {
+    const session = this.sessions.get(callId);
+    if (session) {
+      this.sessions.delete(callId);
+      console.log(`🗑️ Call session removed: ${callId}`);
+      return true;
+    }
+    return false;
+  }
+
   cleanupExpiredSessions() {
     const now = new Date();
     let cleaned = 0;
