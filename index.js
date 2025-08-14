@@ -468,7 +468,7 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('🔧 Customer data received from Retell:', JSON.stringify(req.body, null, 2));
       
       // Create a new session
-      const callId = 'retell-' + Date.now();
+      const callId = 'webhook-call-' + Date.now();
       const session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
       
       // Store all the data directly in the session object
