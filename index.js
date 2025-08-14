@@ -302,12 +302,12 @@ app.post('/api/call/end', (req, res) => {
 
 app.get('/api/call/sessions', (req, res) => {
   try {
-    const sessions = callSessionManager.getAllActiveSessions();
+    const sessions = callSessionManager.getAllSessions(); // Changed from getAllActiveSessions() to getAllSessions()
     res.json({ 
       success: true, 
       sessions,
       count: sessions.length,
-      message: 'Active sessions retrieved successfully'
+      message: 'All sessions retrieved successfully'
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
