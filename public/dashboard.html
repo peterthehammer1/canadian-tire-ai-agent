@@ -736,6 +736,54 @@
             color: #333;
         }
 
+        /* Additional Appointment Styling */
+        .vehicle-details, .service-details {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #E5E5E5;
+        }
+
+        .vehicle-details h4, .service-details h4 {
+            color: #E31837;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .vehicle-grid, .service-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .appointment-meta {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #E5E5E5;
+            background: #F8F9FA;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: #333;
+        }
+
         /* Analytics Grid */
         .analytics-grid {
             display: grid;
@@ -754,7 +802,7 @@
         .analytics-card h3 {
             color: #333;
             margin-bottom: 15px;
-            font-size: 1.1rem;
+            font-size: 0.825rem; /* Reduced by 25% from 1.1rem */
         }
 
         .metrics-grid {
@@ -768,7 +816,7 @@
         }
 
         .metric-value {
-            font-size: 2.5rem;
+            font-size: 1.875rem; /* Reduced by 25% from 2.5rem */
             font-weight: bold;
             color: #E31837;
             margin-bottom: 5px;
@@ -776,7 +824,7 @@
 
         .metric-label {
             color: #666;
-            font-size: 0.9rem;
+            font-size: 0.675rem; /* Reduced by 25% from 0.9rem */
         }
 
         .service-metric {
@@ -796,6 +844,7 @@
         .service-name {
             font-weight: 600;
             color: #333;
+            font-size: 0.75rem; /* Reduced by 25% from 1rem */
         }
 
         .service-count {
@@ -803,14 +852,14 @@
             color: #0066CC;
             padding: 4px 10px;
             border-radius: 15px;
-            font-size: 0.8rem;
+            font-size: 0.6rem; /* Reduced by 25% from 0.8rem */
             font-weight: 600;
         }
 
         .service-details {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.675rem; /* Reduced by 25% from 0.9rem */
             color: #666;
         }
 
@@ -840,6 +889,7 @@
         .location-name {
             font-weight: 600;
             color: #333;
+            font-size: 0.75rem; /* Reduced by 25% from 1rem */
         }
 
         .location-count {
@@ -847,14 +897,14 @@
             color: #0066CC;
             padding: 4px 10px;
             border-radius: 15px;
-            font-size: 0.8rem;
+            font-size: 0.6rem; /* Reduced by 25% from 0.8rem */
             font-weight: 600;
         }
 
         .location-conversion {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.675rem; /* Reduced by 25% from 0.9rem */
             color: #666;
         }
 
@@ -876,7 +926,7 @@
         .customer-metric {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.675rem; /* Reduced by 25% from 0.9rem */
             color: #333;
         }
 
@@ -908,13 +958,13 @@
         .vehicle-section h4 {
             color: #E31837;
             margin-bottom: 10px;
-            font-size: 1rem;
+            font-size: 0.75rem; /* Reduced by 25% from 1rem */
         }
 
         .vehicle-metric {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.675rem; /* Reduced by 25% from 0.9rem */
             color: #333;
         }
 
@@ -928,7 +978,7 @@
             color: #0066CC;
             padding: 4px 10px;
             border-radius: 15px;
-            font-size: 0.8rem;
+            font-size: 0.6rem; /* Reduced by 25% from 0.8rem */
             font-weight: 600;
         }
 
@@ -942,7 +992,7 @@
             color: #0066CC;
             padding: 4px 10px;
             border-radius: 15px;
-            font-size: 0.8rem;
+            font-size: 0.6rem; /* Reduced by 25% from 0.8rem */
             font-weight: 600;
         }
 
@@ -962,13 +1012,13 @@
         .time-section h4 {
             color: #E31837;
             margin-bottom: 10px;
-            font-size: 1rem;
+            font-size: 0.75rem; /* Reduced by 25% from 1rem */
         }
 
         .time-metric {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.675rem; /* Reduced by 25% from 0.9rem */
             color: #333;
         }
 
@@ -982,7 +1032,7 @@
             color: #0066CC;
             padding: 4px 10px;
             border-radius: 15px;
-            font-size: 0.8rem;
+            font-size: 0.6rem; /* Reduced by 25% from 0.8rem */
             font-weight: 600;
         }
     </style>
@@ -1497,7 +1547,21 @@
                 return;
             }
 
-            const appointments = currentData.filter(session => session.appointmentBooked);
+            console.log('🔍 Debug: Total sessions:', currentData.length);
+            console.log('🔍 Debug: Sessions with appointmentBooked=true:', currentData.filter(s => s.appointmentBooked === true).length);
+            console.log('🔍 Debug: Sessions with appointmentDetails:', currentData.filter(s => s.appointmentDetails && Object.keys(s.appointmentDetails).length > 0).length);
+            console.log('🔍 Debug: Sessions with preferred date/time:', currentData.filter(s => s.customerInfo.preferredDate && s.customerInfo.preferredTime).length);
+
+            // Filter for sessions that have appointments booked
+            const appointments = currentData.filter(session => {
+                // Check if appointment is booked OR if we have appointment details
+                return session.appointmentBooked === true || 
+                       (session.appointmentDetails && Object.keys(session.appointmentDetails).length > 0) ||
+                       (session.customerInfo.preferredDate && session.customerInfo.preferredTime);
+            });
+            
+            console.log('🔍 Debug: Filtered appointments:', appointments.length);
+            console.log('🔍 Debug: Appointment data:', appointments);
             
             if (appointments.length === 0) {
                 document.getElementById('appointments-content').innerHTML = 
@@ -1506,9 +1570,34 @@
             }
 
             const appointmentsHtml = appointments.map(session => {
-                const appointmentDate = session.customerInfo.preferredDate || 'Not specified';
-                const appointmentTime = session.customerInfo.preferredTime || 'Not specified';
+                // Extract appointment information
+                const appointmentDate = session.customerInfo.preferredDate || 
+                                     (session.appointmentDetails ? session.appointmentDetails.date : 'Not specified');
+                const appointmentTime = session.customerInfo.preferredTime || 
+                                      (session.appointmentDetails ? session.appointmentDetails.time : 'Not specified');
                 const serviceType = session.customerInfo.serviceType || 'Not specified';
+                const serviceReason = session.customerInfo.serviceReason || 'Not specified';
+                
+                // Format the date for display
+                let displayDate = appointmentDate;
+                let displayTime = appointmentTime;
+                
+                // Try to parse and format the date if it's a valid date string
+                if (appointmentDate && appointmentDate !== 'Not specified') {
+                    try {
+                        const parsedDate = new Date(appointmentDate);
+                        if (!isNaN(parsedDate.getTime())) {
+                            displayDate = parsedDate.toLocaleDateString('en-US', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            });
+                        }
+                    } catch (e) {
+                        // Keep original format if parsing fails
+                    }
+                }
                 
                 return `
                     <div class="session-card appointment-card">
@@ -1516,8 +1605,8 @@
                             <div class="appointment-date">
                                 <div class="date-icon">📅</div>
                                 <div class="date-info">
-                                    <div class="date-main">${appointmentDate}</div>
-                                    <div class="time-info">${appointmentTime}</div>
+                                    <div class="date-main">${displayDate}</div>
+                                    <div class="time-info">${displayTime}</div>
                                 </div>
                             </div>
                             <div class="appointment-status">
@@ -1541,16 +1630,26 @@
                                     <span class="detail-value">${session.customerInfo.email || 'Not provided'}</span>
                                 </div>
                                 <div class="detail-item">
-                                    <span class="detail-label">Vehicle:</span>
-                                    <span class="detail-value">${session.customerInfo.carYear || ''} ${session.customerInfo.carMake || ''} ${session.customerInfo.carModel || ''}</span>
-                                </div>
-                                <div class="detail-item">
-                                    <span class="detail-label">Preferred Location:</span>
-                                    <span class="detail-value">${session.customerInfo.location || 'Not specified'}</span>
-                                </div>
-                                <div class="detail-item">
                                     <span class="detail-label">Triangle Member:</span>
                                     <span class="detail-value">${session.customerInfo.triangleMember ? 'Yes' : 'No'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="vehicle-details">
+                            <h4>🚗 Vehicle Information</h4>
+                            <div class="vehicle-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Year:</span>
+                                    <span class="detail-value">${session.customerInfo.carYear || 'Not specified'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Make:</span>
+                                    <span class="detail-value">${session.customerInfo.carMake || 'Not specified'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Model:</span>
+                                    <span class="detail-value">${session.customerInfo.carModel || 'Not specified'}</span>
                                 </div>
                             </div>
                         </div>
@@ -1558,18 +1657,22 @@
                         <div class="service-details">
                             <h4>🔧 Service Details</h4>
                             <div class="service-info">
-                                <div class="service-type">
-                                    <span class="service-label">Service Type:</span>
-                                    <span class="service-value">${serviceType}</span>
+                                <div class="detail-item">
+                                    <span class="detail-label">Service Type:</span>
+                                    <span class="detail-value">${serviceType}</span>
                                 </div>
-                                <div class="service-reason">
-                                    <span class="service-label">Reason for Appointment:</span>
-                                    <span class="service-value">${session.customerInfo.serviceReason || 'Not specified'}</span>
+                                <div class="detail-item">
+                                    <span class="detail-label">Service Reason:</span>
+                                    <span class="detail-value">${serviceReason}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Preferred Location:</span>
+                                    <span class="detail-value">${session.customerInfo.location || 'Not specified'}</span>
                                 </div>
                             </div>
                         </div>
                         
-                        ${session.appointmentDetails ? `
+                        ${session.appointmentDetails && Object.keys(session.appointmentDetails).length > 0 ? `
                             <div class="appointment-notes">
                                 <h4>📝 Additional Notes</h4>
                                 <div class="notes-content">
@@ -1577,6 +1680,17 @@
                                 </div>
                             </div>
                         ` : ''}
+                        
+                        <div class="appointment-meta">
+                            <div class="meta-item">
+                                <span class="meta-label">Call ID:</span>
+                                <span class="meta-value">${session.callId}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-label">Booked On:</span>
+                                <span class="meta-value">${new Date(session.lastActivity).toLocaleString()}</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             }).join('');
