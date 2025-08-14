@@ -1,21 +1,21 @@
 <svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
-  <!-- Red Triangle - larger and more prominent -->
-  <path d="M30 65 L100 15 L170 65 Z" fill="#E31837" stroke="#E31837" stroke-width="1"/>
+  <!-- Red Triangle - main element with proper proportions -->
+  <path d="M60 70 L100 20 L140 70 Z" fill="#E31837" stroke="white" stroke-width="1"/>
   
-  <!-- Green Maple Leaf - properly sized and positioned -->
-  <path d="M85 20 L90 15 L95 20 L100 15 L105 20 L100 25 L95 20 L90 25 Z" fill="#28A745" stroke="white" stroke-width="0.8"/>
+  <!-- Green Maple Leaf positioned at top center of triangle -->
+  <path d="M100 22 L103 19 L106 22 L104 25 L101 23 L98 25 Z" fill="#28A745" stroke="white" stroke-width="0.5"/>
   
   <!-- Vertical Divider Line -->
-  <line x1="180" y1="15" x2="180" y2="65" stroke="#666" stroke-width="1"/>
+  <line x1="150" y1="15" x2="150" y2="65" stroke="#666" stroke-width="1"/>
   
   <!-- Right Section Content -->
-  <!-- Maple Leaf Icon -->
-  <path d="M190 20 L192 17 L194 20 L196 17 L198 20 L196 23 L194 20 L192 23 Z" fill="#E31837"/>
+  <!-- Small Maple Leaf Icon -->
+  <path d="M160 20 L162 17 L164 20 L166 17 L168 20 L166 23 L164 20 L162 23 Z" fill="#E31837"/>
   
   <!-- "Proudly Canadian" Text -->
-  <text x="190" y="35" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#E31837">Proudly</text>
-  <text x="190" y="48" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#E31837">Canadian</text>
+  <text x="160" y="35" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#E31837">Proudly</text>
+  <text x="160" y="48" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#E31837">Canadian</text>
   
   <!-- "Since 1922" Text -->
-  <text x="190" y="60" font-family="Arial, sans-serif" font-size="10" fill="#E31837">Since 1922</text>
+  <text x="160" y="60" font-family="Arial, sans-serif" font-size="10" fill="#E31837">Since 1922</text>
 </svg>
