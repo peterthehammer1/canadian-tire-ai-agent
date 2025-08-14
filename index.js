@@ -542,12 +542,12 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('🔧 Complete customer data received from Retell AI');
       console.log('📊 Data:', JSON.stringify(req.body, null, 2));
       
-      // Check if this is a complete customer record
-      const hasCompleteData = req.body.name && req.body.phone && req.body.serviceType;
+      // Check if this is a valid customer record (at least name and phone)
+      const hasValidData = req.body.name && req.body.phone;
       
-      if (!hasCompleteData) {
-        console.log('⚠️ Incomplete data received, skipping webhook processing');
-        res.json({ success: true, message: 'Incomplete data, skipping' });
+      if (!hasValidData) {
+        console.log('⚠️ Invalid data received, skipping webhook processing');
+        res.json({ success: true, message: 'Invalid data, skipping' });
         return;
       }
       
@@ -635,9 +635,6 @@ app.post('/webhook/ai', async (req, res) => {
         };
         console.log('📅 Appointment marked as booked');
       }
-      
-      // End the session since this is the complete data
-      callSessionManager.endSession(callId);
       
       console.log('✅ Complete customer data processed for call:', callId);
       console.log('📝 Final customer info:', session.customerInfo);
