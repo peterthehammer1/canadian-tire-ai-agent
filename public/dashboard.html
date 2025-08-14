@@ -1075,9 +1075,8 @@
         </div>
 
         <div class="data-management">
-            <button class="refresh-btn" onclick="refreshData()">🔄 Refresh Data</button>
+            <button class="refresh-btn" onclick="manualRefresh()">🔄 Refresh Data</button>
             <button class="clear-data-btn" onclick="clearStoredData()">🗑️ Clear Data</button>
-            <button class="refresh-btn" onclick="createSampleData()">🧪 Load Sample Data</button>
             <div class="data-status">
                 <div>📊 <strong>Data Source:</strong> <span id="data-source">-</span></div>
                 <div>🕒 <strong>Last Updated:</strong> <span id="last-update">-</span></div>
@@ -1227,26 +1226,37 @@
                 const data = await response.json();
                 console.log('📊 API Response:', data);
                 
-                currentData = data.sessions || [];
-                console.log('📋 Processed sessions:', currentData.length);
-                
-                // Save data to localStorage for persistence
-                saveDataToStorage(currentData);
-                
-                updateStats();
-                displaySessions();
-                
-                console.log('✅ Data refreshed successfully');
+                if (data.sessions && data.sessions.length > 0) {
+                    currentData = data.sessions;
+                    // Save data to localStorage for persistence
+                    saveDataToStorage(currentData);
+                    updateStats();
+                    displaySessions();
+                    displayCustomers();
+                    displayAppointments();
+                    displayAnalytics();
+                    console.log('✅ Data refreshed successfully from API:', data.sessions.length, 'sessions');
+                } else {
+                    console.log('⚠️ API returned no sessions, keeping existing data if available');
+                    // Don't overwrite existing data if API returns empty
+                    if (!currentData || currentData.length === 0) {
+                        document.getElementById('sessions-content').innerHTML = 
+                            '<div class="no-data">No call sessions found. Make a call to your AI agent to see data here.</div>';
+                    }
+                }
             } catch (error) {
                 console.error('❌ Error refreshing data:', error);
                 
                 // Try to load from localStorage if API fails
                 const storedData = loadDataFromStorage();
-                if (storedData) {
+                if (storedData && storedData.length > 0) {
                     currentData = storedData;
                     updateStats();
                     displaySessions();
-                    console.log('📂 Using stored data due to API error');
+                    displayCustomers();
+                    displayAppointments();
+                    displayAnalytics();
+                    console.log('📂 Using stored data due to API error:', storedData.length, 'sessions');
                 } else {
                     console.log('⚠️ No stored data available, showing no data message');
                     document.getElementById('sessions-content').innerHTML = 
@@ -1262,15 +1272,22 @@
         function loadInitialData() {
             // First try to load from localStorage for instant display
             const storedData = loadDataFromStorage();
-            if (storedData) {
+            if (storedData && storedData.length > 0) {
                 currentData = storedData;
                 updateStats();
                 displaySessions();
-                console.log('Loaded initial data from localStorage');
+                displayCustomers();
+                displayAppointments();
+                displayAnalytics();
+                console.log('📂 Loaded initial data from localStorage:', storedData.length, 'sessions');
+            } else {
+                console.log('📂 No stored data available');
             }
             
-            // Then refresh from API to get latest data
-            refreshData();
+            // Then refresh from API to get latest data (but don't overwrite if API fails)
+            setTimeout(() => {
+                refreshData();
+            }, 1000); // Small delay to ensure localStorage data is displayed first
         }
 
         // Update statistics
@@ -1301,8 +1318,9 @@
             document.getElementById('active-calls').textContent = activeCalls;
             document.getElementById('appointments-booked').textContent = appointmentsBooked;
             document.getElementById('data-completion').textContent = dataCompletion + '%';
-            document.getElementById('last-update').textContent = new Date().toLocaleString();
-            document.getElementById('data-source').textContent = showDataSource();
+            
+            // Update data status display
+            updateDataStatus();
         }
 
         // Show data source information
@@ -1996,111 +2014,6 @@
             });
             
             return dailyCounts;
-        }
-
-        // Test function to create sample data
-        function createSampleData() {
-            const sampleData = [
-                {
-                    callId: 'sample-call-001',
-                    sessionId: 'session-001',
-                    startTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-                    endTime: new Date(Date.now() - 1.5 * 60 * 60 * 1000).toISOString(), // 1.5 hours ago
-                    lastActivity: new Date(Date.now() - 1.5 * 60 * 60 * 1000).toISOString(),
-                    status: 'ended',
-                    customerInfo: {
-                        name: 'John Smith',
-                        phone: '555-123-4567',
-                        email: 'john.smith@email.com',
-                        carMake: 'Toyota',
-                        carModel: 'Camry',
-                        carYear: '2020',
-                        serviceType: 'Oil Change',
-                        serviceReason: 'Regular maintenance',
-                        triangleMember: true,
-                        location: 'Fairway Road',
-                        preferredDate: '2025-01-20',
-                        preferredTime: '10:00 AM'
-                    },
-                    conversationHistory: [
-                        {
-                            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-                            type: 'transcript',
-                            content: 'Customer called for oil change service'
-                        },
-                        {
-                            timestamp: new Date(Date.now() - 1.8 * 60 * 60 * 1000).toISOString(),
-                            type: 'transcript',
-                            content: 'Customer confirmed Toyota Camry 2020'
-                        }
-                    ],
-                    conversationLength: 2,
-                    extractedData: {
-                        serviceType: 'Oil Change',
-                        carMake: 'Toyota',
-                        carModel: 'Camry'
-                    },
-                    appointmentBooked: true,
-                    appointmentDetails: {
-                        date: '2025-01-20',
-                        time: '10:00 AM',
-                        service: 'Oil Change',
-                        location: 'Fairway Road'
-                    }
-                },
-                {
-                    callId: 'sample-call-002',
-                    sessionId: 'session-002',
-                    startTime: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-                    endTime: new Date(Date.now() - 0.5 * 60 * 60 * 1000).toISOString(), // 30 minutes ago
-                    lastActivity: new Date(Date.now() - 0.5 * 60 * 60 * 1000).toISOString(),
-                    status: 'ended',
-                    customerInfo: {
-                        name: 'Sarah Johnson',
-                        phone: '555-987-6543',
-                        email: 'sarah.j@email.com',
-                        carMake: 'Honda',
-                        carModel: 'CR-V',
-                        carYear: '2018',
-                        serviceType: 'Tire Rotation',
-                        serviceReason: 'Seasonal tire change',
-                        triangleMember: false,
-                        location: 'King Street',
-                        preferredDate: '2025-01-22',
-                        preferredTime: '2:00 PM'
-                    },
-                    conversationHistory: [
-                        {
-                            timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-                            type: 'transcript',
-                            content: 'Customer needs tire rotation service'
-                        }
-                    ],
-                    conversationLength: 1,
-                    extractedData: {
-                        serviceType: 'Tire Rotation',
-                        carMake: 'Honda',
-                        carModel: 'CR-V'
-                    },
-                    appointmentBooked: true,
-                    appointmentDetails: {
-                        date: '2025-01-22',
-                        time: '2:00 PM',
-                        service: 'Tire Rotation',
-                        location: 'King Street'
-                    }
-                }
-            ];
-            
-            currentData = sampleData;
-            saveDataToStorage(currentData);
-            updateStats();
-            displaySessions();
-            displayCustomers();
-            displayAppointments();
-            displayAnalytics();
-            
-            console.log('🧪 Sample data loaded:', sampleData.length, 'sessions');
         }
 
         // Auto-refresh every 30 seconds
