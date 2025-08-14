@@ -1,14 +1,16 @@
 {
   "name": "canadian-tire-appointments",
   "version": "1.0.0",
-  "description": "Simple appointment booking system for Canadian Tire service department",
-  "main": "app.js",
+  "description": "Simple appointment booking system for Canadian Tire service department using Airtable",
+  "main": "airtable-webhook.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node airtable-webhook.js",
+    "dev": "nodemon airtable-webhook.js",
+    "old": "node app.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "airtable": "^0.12.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
