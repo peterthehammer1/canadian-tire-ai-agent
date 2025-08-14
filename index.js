@@ -463,9 +463,9 @@ app.post('/webhook/ai', async (req, res) => {
     console.log(`🎯 Extracted - Event Type: ${event_type}`);
     console.log(`📊 Extracted - Data:`, JSON.stringify(data, null, 2));
     
-    // Simple customer data handling - create session and store data directly
+    // Handle customer data from Retell AI cust_info function
     if (req.body.name || req.body.phone || req.body.serviceType) {
-      console.log('🔧 Customer data received:', JSON.stringify(req.body, null, 2));
+      console.log('🔧 Customer data received from Retell:', JSON.stringify(req.body, null, 2));
       
       // Create a new session
       const callId = 'retell-' + Date.now();
@@ -486,6 +486,23 @@ app.post('/webhook/ai', async (req, res) => {
       
       console.log('✅ Session created with data:', callId);
       console.log('📝 Customer info stored:', session.customerInfo);
+      
+      // Check if we have enough info to mark as appointment ready
+      const customerInfo = session.customerInfo;
+      const hasRequiredInfo = customerInfo.name && customerInfo.phone && 
+                             customerInfo.serviceType && customerInfo.location &&
+                             customerInfo.preferredDate && customerInfo.preferredTime;
+      
+      if (hasRequiredInfo) {
+        console.log('✅ All required info collected, appointment ready');
+        session.appointmentBooked = true;
+        session.appointmentDetails = {
+          date: customerInfo.preferredDate,
+          time: customerInfo.preferredTime,
+          service: customerInfo.serviceType,
+          location: customerInfo.location
+        };
+      }
     } else if (event_type === 'call_started' || event_type === 'start') {
       // Create a new call session
       const callId = data.call_id || data.callId || data.id;
