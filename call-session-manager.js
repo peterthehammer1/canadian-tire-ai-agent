@@ -6,17 +6,87 @@ class CallSessionManager {
     this.sessionTimeout = 30 * 60 * 1000; // 30 minutes
   }
 
+  // Normalize phone numbers to 10-digit format (strip non-digits, drop leading 1)
+  normalizePhone(phone) {
+    if (!phone) return null;
+    const digits = String(phone).replace(/\D/g, '');
+    if (digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
+    if (digits.length >= 10) return digits.slice(-10);
+    return digits;
+  }
+
+  // Find an active session by phone number
+  findSessionByPhone(phone) {
+    const target = this.normalizePhone(phone);
+    if (!target) return null;
+    for (const [, session] of this.sessions) {
+      const sessionPhone = this.normalizePhone(session.customerInfo.phone || session.customerPhone);
+      if (session.status === 'active' && sessionPhone && sessionPhone === target) {
+        return session;
+      }
+    }
+    return null;
+  }
+
+  // Find the most recent active session without a known phone within a time window
+  findRecentActiveSessionWithoutPhone(maxAgeMs = 10 * 60 * 1000) {
+    const now = Date.now();
+    let best = null;
+    for (const [, session] of this.sessions) {
+      const phone = this.normalizePhone(session.customerInfo.phone || session.customerPhone);
+      const isUnknown = !phone || phone === 'unknown' || phone.length < 10;
+      if (session.status === 'active' && isUnknown) {
+        const age = now - new Date(session.startTime).getTime();
+        if (age <= maxAgeMs) {
+          if (!best || new Date(session.lastActivity) > new Date(best.lastActivity)) {
+            best = session;
+          }
+        }
+      }
+    }
+    return best;
+  }
+
+  // Resolve to an existing session by callId or phone, otherwise create or attach
+  getOrCreateSession(callId, phone) {
+    if (callId && this.sessions.has(callId)) {
+      return { callId, session: this.sessions.get(callId) };
+    }
+
+    const existingByPhone = this.findSessionByPhone(phone);
+    if (existingByPhone) {
+      return { callId: existingByPhone.callId, session: existingByPhone };
+    }
+
+    // If only phone present and there is a recent active session without phone, attach phone to it
+    if (!callId && phone) {
+      const recent = this.findRecentActiveSessionWithoutPhone();
+      if (recent) {
+        const normalized = this.normalizePhone(phone);
+        recent.customerPhone = normalized || phone;
+        recent.customerInfo.phone = normalized || phone;
+        recent.lastActivity = new Date();
+        return { callId: recent.callId, session: recent };
+      }
+    }
+
+    const newCallId = callId || `retell-${Date.now()}`;
+    const session = this.createSession(newCallId, phone || 'unknown');
+    return { callId: newCallId, session };
+  }
+
   createSession(callId, customerPhone) {
+    const normalizedPhone = this.normalizePhone(customerPhone);
     const session = {
       callId,
-      customerPhone,
+      customerPhone: normalizedPhone || customerPhone,
       sessionId: uuidv4(),
       startTime: new Date(),
       lastActivity: new Date(),
       status: 'active',
       customerInfo: {
         name: null,
-        phone: customerPhone,
+        phone: normalizedPhone || customerPhone,
         email: null,
         carMake: null,
         carModel: null,
@@ -38,15 +108,38 @@ class CallSessionManager {
     return session;
   }
 
-  updateCustomerInfo(callId, field, value) {
+  updateCustomerInfo(callId, fieldOrObject, value) {
     const session = this.sessions.get(callId);
-    if (session) {
-      session.customerInfo[field] = value;
-      session.lastActivity = new Date();
-      console.log(`📝 Updated ${field}: ${value} for call ${callId}`);
-      return true;
+    if (!session) return false;
+
+    const mapFieldName = (field) => {
+      if (field === 'fullName') return 'name';
+      if (field === 'loyaltyMember') return 'triangleMember';
+      if (field === 'customer_phone') return 'phone';
+      return field;
+    };
+
+    const applyUpdate = (field, val) => {
+      if (val === null || val === undefined || val === '') return;
+      const mappedField = mapFieldName(field);
+      if (mappedField === 'phone') {
+        const normalized = this.normalizePhone(val);
+        session.customerPhone = normalized || val;
+        session.customerInfo.phone = normalized || val;
+      } else {
+        session.customerInfo[mappedField] = val;
+      }
+      console.log(`📝 Updated ${mappedField}: ${val} for call ${callId}`);
+    };
+
+    if (fieldOrObject && typeof fieldOrObject === 'object') {
+      Object.entries(fieldOrObject).forEach(([k, v]) => applyUpdate(k, v));
+    } else {
+      applyUpdate(fieldOrObject, value);
     }
-    return false;
+
+    session.lastActivity = new Date();
+    return true;
   }
 
   addConversationEntry(callId, entry) {
@@ -234,10 +327,13 @@ class CallSessionManager {
           sessionId: session.sessionId,
           startTime: session.startTime,
           lastActivity: session.lastActivity,
+          status: session.status,
           customerInfo: session.customerInfo,
           appointmentBooked: session.appointmentBooked,
           appointmentDetails: session.appointmentDetails,
-          conversationLength: session.conversationHistory.length
+          conversationLength: session.conversationHistory.length,
+          conversationHistory: session.conversationHistory,
+          extractedData: session.extractedData
         });
       }
     }

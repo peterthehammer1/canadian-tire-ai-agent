@@ -172,7 +172,7 @@ app.post('/api/call/start', (req, res) => {
     const session = callSessionManager.createSession(callId, customerPhone);
     res.json({ 
       success: true, 
-      session: callSessionManager.getSessionSummary(callId),
+      session: { callId: session.callId, customerInfo: session.customerInfo },
       message: 'Call session started successfully'
     });
   } catch (error) {
@@ -188,10 +188,16 @@ app.post('/api/call/update-info', (req, res) => {
       return res.status(400).json({ error: 'Call ID and updates are required' });
     }
     
-    const session = callSessionManager.updateCustomerInfo(callId, updates);
+    if (typeof updates === 'object') {
+      Object.entries(updates).forEach(([k, v]) => {
+        callSessionManager.updateCustomerInfo(callId, k, v);
+      });
+    }
+    
+    const session = callSessionManager.getSession(callId);
     res.json({ 
       success: true, 
-      session: callSessionManager.getSessionSummary(callId),
+      session: { callId: session.callId, customerInfo: session.customerInfo },
       message: 'Customer information updated successfully'
     });
   } catch (error) {
@@ -207,13 +213,21 @@ app.post('/api/call/check-availability', async (req, res) => {
       return res.status(400).json({ error: 'Call ID, date, location, and service type are required' });
     }
     
-    const availableSlots = await callSessionManager.checkAvailability(callId, date, location, serviceType);
-    const session = callSessionManager.getSessionSummary(callId);
+    // Minimal inline implementation: compute available slots via appointmentManager
+    const availableSlots = appointmentManager.getAvailableSlots(date, location, serviceType).map(s => ({
+      displayTime: s.start,
+      time: s.start
+    }));
+    
+    // Persist date/location/service on session
+    callSessionManager.updateCustomerInfo(callId, { preferredDate: date, location, serviceType });
+
+    const session = callSessionManager.getSession(callId);
     
     res.json({ 
       success: true, 
       availableSlots,
-      session,
+      session: { callId: session.callId, customerInfo: session.customerInfo },
       message: 'Availability checked successfully'
     });
   } catch (error) {
@@ -229,13 +243,16 @@ app.post('/api/call/select-time', (req, res) => {
       return res.status(400).json({ error: 'Call ID and time are required' });
     }
     
-    const selectedSlot = callSessionManager.selectTimeSlot(callId, time);
-    const session = callSessionManager.getSessionSummary(callId);
+    // Persist selected time on session
+    callSessionManager.updateCustomerInfo(callId, { preferredTime: time });
+
+    const selectedSlot = { time };
+    const session = callSessionManager.getSession(callId);
     
     res.json({ 
       success: true, 
       selectedSlot,
-      session,
+      session: { callId: session.callId, customerInfo: session.customerInfo },
       message: 'Time slot selected successfully'
     });
   } catch (error) {
@@ -251,13 +268,33 @@ app.post('/api/call/book-appointment', async (req, res) => {
       return res.status(400).json({ error: 'Call ID is required' });
     }
     
-    const booking = await callSessionManager.bookAppointment(callId);
-    const session = callSessionManager.getSessionSummary(callId);
-    
+    const session = callSessionManager.getSession(callId);
+    if (!session) throw new Error('Session not found');
+
+    const info = session.customerInfo;
+    const appointmentPayload = {
+      location: info.location,
+      fullName: info.name || 'Unknown',
+      phoneNumber: info.phone || 'unknown',
+      email: info.email || 'unknown@example.com',
+      carMake: info.carMake || 'Unknown',
+      carModel: info.carModel || 'Unknown',
+      carYear: String(info.carYear || 'Unknown'),
+      serviceType: info.serviceType || 'oil_change',
+      loyaltyMember: !!info.triangleMember,
+      date: info.preferredDate,
+      time: info.preferredTime
+    };
+
+    const booking = appointmentManager.bookAppointment(appointmentPayload);
+
+    // Mark booked on session
+    callSessionManager.bookAppointment(callId, booking);
+
     res.json({ 
       success: true, 
       booking,
-      session,
+      session: { callId: session.callId, customerInfo: session.customerInfo },
       message: 'Appointment booked successfully!'
     });
   } catch (error) {
@@ -268,13 +305,13 @@ app.post('/api/call/book-appointment', async (req, res) => {
 app.get('/api/call/state/:callId', (req, res) => {
   try {
     const { callId } = req.params;
-    const state = callSessionManager.getConversationState(callId);
-    const session = callSessionManager.getSessionSummary(callId);
+    const session = callSessionManager.getSession(callId);
+    const state = session ? { hasInfo: !!(session.customerInfo.name && session.customerInfo.phone && session.customerInfo.serviceType && session.customerInfo.location) } : {};
     
     res.json({ 
       success: true, 
       state,
-      session,
+      session: session ? { callId: session.callId, customerInfo: session.customerInfo } : null,
       message: 'Call state retrieved successfully'
     });
   } catch (error) {
@@ -340,18 +377,20 @@ app.post('/webhook/ai', async (req, res) => {
     
     if (event_type === 'call_started' || event_type === 'start') {
       // Create a new call session
-      const callId = data.call_id || data.callId || data.id;
-      const customerPhone = data.customer_phone || data.phone || data.customerPhone;
+      const callIdRaw = data.call_id || data.callId || data.id;
+      const phoneRaw = data.customer_phone || data.phone || data.customerPhone;
       
-      if (callId) {
-        const session = callSessionManager.createSession(callId, customerPhone);
-        console.log('✅ Call started:', callId, 'Session created:', session.callId);
+      if (callIdRaw || phoneRaw) {
+        const { callId, session } = callSessionManager.getOrCreateSession(callIdRaw, phoneRaw);
+        console.log('✅ Call started:', callId, 'Session created/resolved:', session.callId);
       } else {
-        console.log('⚠️ Call started but no call ID found');
+        console.log('⚠️ Call started but no identifiers found');
       }
     } else if (event_type === 'call_ended' || event_type === 'end') {
       // End the call session
-      const callId = data.call_id || data.callId || data.id;
+      const callIdRaw = data.call_id || data.callId || data.id;
+      const phoneRaw = data.customer_phone || data.phone || data.customerPhone;
+      const { callId } = callSessionManager.getOrCreateSession(callIdRaw, phoneRaw);
       if (callId) {
         callSessionManager.endSession(callId);
         console.log('✅ Call ended:', callId);
@@ -359,7 +398,10 @@ app.post('/webhook/ai', async (req, res) => {
     } else if (event_type === 'transcript' || event_type === 'message') {
       // Process transcript for intent recognition
       const transcript = data.transcript || data.message || data.text;
-      const callId = data.call_id || data.callId || data.id;
+      const callIdRaw = data.call_id || data.callId || data.id;
+      const phoneRaw = data.customer_phone || data.phone || data.customerPhone;
+      
+      const { callId } = callSessionManager.getOrCreateSession(callIdRaw, phoneRaw);
       
       console.log('📝 Transcript received for call:', callId);
       console.log('💬 Content:', transcript);
@@ -393,21 +435,14 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('🔧 Function call received:', data.function_name);
       console.log('📊 Function arguments:', data.arguments);
       
-      const callId = data.call_id || data.callId || data.id || 'function-call-' + Date.now();
+      const callIdRaw = data.call_id || data.callId || data.id || null;
+      const phoneRaw = data.arguments?.phone || data.arguments?.customer_phone || data.phone || data.customer_phone || null;
       
-      // Create or get session for function calls
-      let session = callSessionManager.getSession(callId);
-      if (!session) {
-        session = callSessionManager.createSession(callId, data.arguments?.phone || 'unknown');
-      }
+      const { callId, session } = callSessionManager.getOrCreateSession(callIdRaw, phoneRaw);
       
       // Update session with function data
       if (data.arguments) {
-        Object.entries(data.arguments).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== '') {
-            callSessionManager.updateCustomerInfo(callId, key, value);
-          }
-        });
+        callSessionManager.updateCustomerInfo(callId, data.arguments);
       }
       
       console.log('✅ Function data processed for call:', callId);
@@ -417,47 +452,12 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('🔧 Direct function data received from Retell AI');
       console.log('📊 Data:', JSON.stringify(req.body, null, 2));
       
-      // Try to find existing session by phone number
-      let existingSession = null;
-      let existingCallId = null;
-      
-      if (req.body.phone && req.body.phone !== 'unknown') {
-        // Look for existing session with this phone number
-        const allSessions = callSessionManager.getAllSessions();
-        console.log('🔍 Looking for existing session with phone:', req.body.phone);
-        console.log('📋 Available sessions:', allSessions.length);
-        
-        for (const session of allSessions) {
-          console.log('📞 Checking session phone:', session.customerInfo.phone, 'vs', req.body.phone);
-          if (session.customerInfo.phone === req.body.phone) {
-            existingSession = session;
-            existingCallId = session.callId;
-            console.log('✅ Found existing session:', existingCallId);
-            break;
-          }
-        }
-      }
-      
-      let callId, session;
-      
-      if (existingSession) {
-        // Update existing session
-        callId = existingCallId;
-        session = existingSession;
-        console.log('🔄 Updating existing session for phone:', req.body.phone);
-      } else {
-        // Create new session
-        callId = 'retell-function-' + Date.now();
-        session = callSessionManager.createSession(callId, req.body.phone || 'unknown');
-        console.log('🆕 Creating new session for phone:', req.body.phone);
-      }
+      const callIdRaw = req.body.call_id || req.body.callId || req.body.id || null;
+      const phoneRaw = req.body.phone || req.body.customer_phone || req.body.customerPhone || null;
+      const { callId, session } = callSessionManager.getOrCreateSession(callIdRaw, phoneRaw);
       
       // Update session with all the data
-      Object.entries(req.body).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          callSessionManager.updateCustomerInfo(callId, key, value);
-        }
-      });
+      callSessionManager.updateCustomerInfo(callId, req.body);
       
       // Check if we have enough info to book an appointment
       const customerInfo = session.customerInfo;
@@ -467,7 +467,6 @@ app.post('/webhook/ai', async (req, res) => {
       
       if (hasRequiredInfo && !session.appointmentBooked) {
         console.log('✅ All required info collected, ready to book appointment');
-        // Here you would trigger the appointment booking flow
         // For now, mark as ready for booking
         session.appointmentBooked = true;
         session.appointmentDetails = {
