@@ -469,6 +469,139 @@
             margin-bottom: 10px;
             font-size: 1rem;
         }
+
+        /* New styles for appointment cards */
+        .appointment-card {
+            background: #F8F9FA;
+            border-left: 4px solid #28A745; /* Green for appointments */
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #E5E5E5;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .appointment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(40, 167, 69, 0.1);
+        }
+
+        .appointment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #E5E5E5;
+        }
+
+        .appointment-date {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-icon {
+            font-size: 1.5rem;
+            color: #28A745;
+        }
+
+        .date-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .date-main {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .time-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .appointment-status {
+            text-align: right;
+        }
+
+        .customer-details {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #E5E5E5;
+        }
+
+        .customer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .service-details {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #E5E5E5;
+        }
+
+        .service-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .service-type, .service-reason {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .service-label {
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .service-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .appointment-notes {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #E5E5E5;
+        }
+
+        .notes-content pre {
+            background: #F0F0F0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -754,25 +887,32 @@
                 return;
             }
 
-            // Group customers by unique phone numbers
+            // Group customers by unique phone numbers and only show complete records
             const customers = {};
             currentData.forEach(session => {
                 const phone = session.customerInfo.phone;
                 if (phone && !customers[phone]) {
-                    customers[phone] = {
-                        phone,
-                        name: session.customerInfo.name,
-                        email: session.customerInfo.email,
-                        carMake: session.customerInfo.carMake,
-                        carModel: session.customerInfo.carModel,
-                        carYear: session.customerInfo.carYear,
-                        triangleMember: session.customerInfo.triangleMember,
-                        location: session.customerInfo.location,
-                        calls: 0,
-                        appointmentsBooked: 0
-                    };
+                    // Only create customer entry if we have essential information
+                    const hasEssentialInfo = session.customerInfo.name && 
+                                           session.customerInfo.email && 
+                                           (session.customerInfo.carMake || session.customerInfo.carModel);
+                    
+                    if (hasEssentialInfo) {
+                        customers[phone] = {
+                            phone,
+                            name: session.customerInfo.name,
+                            email: session.customerInfo.email,
+                            carMake: session.customerInfo.carMake,
+                            carModel: session.customerInfo.carModel,
+                            carYear: session.customerInfo.carYear,
+                            triangleMember: session.customerInfo.triangleMember,
+                            location: session.customerInfo.location,
+                            calls: 0,
+                            appointmentsBooked: 0
+                        };
+                    }
                 }
-                if (phone) {
+                if (phone && customers[phone]) {
                     customers[phone].calls++;
                     if (session.appointmentBooked) {
                         customers[phone].appointmentsBooked++;
@@ -784,7 +924,7 @@
                 <div class="session-card">
                     <div class="session-header">
                         <div>
-                            <div class="session-id">${customer.name || 'Unknown Name'}</div>
+                            <div class="session-id">${customer.name}</div>
                             <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
                                 Phone: ${customer.phone}
                             </div>
@@ -799,7 +939,7 @@
                     <div class="customer-info">
                         <div class="info-item">
                             <div class="info-label">Email</div>
-                            <div class="info-value ${customer.email ? '' : 'null'}">${customer.email || 'Not provided'}</div>
+                            <div class="info-value">${customer.email}</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">Vehicle</div>
@@ -811,7 +951,7 @@
                         </div>
                         <div class="info-item">
                             <div class="info-label">Preferred Location</div>
-                            <div class="info-value ${customer.location ? '' : 'null'}">${customer.location || 'Not specified'}</div>
+                            <div class="info-value">${customer.location || 'Not specified'}</div>
                         </div>
                     </div>
                 </div>
@@ -836,47 +976,81 @@
                 return;
             }
 
-            const appointmentsHtml = appointments.map(session => `
-                <div class="session-card">
-                    <div class="session-header">
-                        <div>
-                            <div class="session-id">Appointment for ${session.customerInfo.name || 'Unknown Customer'}</div>
-                            <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
-                                Booked on: ${new Date(session.lastActivity).toLocaleString()}
+            const appointmentsHtml = appointments.map(session => {
+                const appointmentDate = session.customerInfo.preferredDate || 'Not specified';
+                const appointmentTime = session.customerInfo.preferredTime || 'Not specified';
+                const serviceType = session.customerInfo.serviceType || 'Not specified';
+                
+                return `
+                    <div class="session-card appointment-card">
+                        <div class="appointment-header">
+                            <div class="appointment-date">
+                                <div class="date-icon">📅</div>
+                                <div class="date-info">
+                                    <div class="date-main">${appointmentDate}</div>
+                                    <div class="time-info">${appointmentTime}</div>
+                                </div>
+                            </div>
+                            <div class="appointment-status">
+                                <span class="appointment-badge">✅ Confirmed</span>
                             </div>
                         </div>
-                        <div style="text-align: right;">
-                            <span class="appointment-badge">✅ Confirmed</span>
+                        
+                        <div class="customer-details">
+                            <h4>👤 Customer Information</h4>
+                            <div class="customer-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Name:</span>
+                                    <span class="detail-value">${session.customerInfo.name || 'Not provided'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Phone:</span>
+                                    <span class="detail-value">${session.customerInfo.phone || 'Not provided'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Email:</span>
+                                    <span class="detail-value">${session.customerInfo.email || 'Not provided'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Vehicle:</span>
+                                    <span class="detail-value">${session.customerInfo.carYear || ''} ${session.customerInfo.carMake || ''} ${session.customerInfo.carModel || ''}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Preferred Location:</span>
+                                    <span class="detail-value">${session.customerInfo.location || 'Not specified'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Triangle Member:</span>
+                                    <span class="detail-value">${session.customerInfo.triangleMember ? 'Yes' : 'No'}</span>
+                                </div>
+                            </div>
                         </div>
+                        
+                        <div class="service-details">
+                            <h4>🔧 Service Details</h4>
+                            <div class="service-info">
+                                <div class="service-type">
+                                    <span class="service-label">Service Type:</span>
+                                    <span class="service-value">${serviceType}</span>
+                                </div>
+                                <div class="service-reason">
+                                    <span class="service-label">Reason for Appointment:</span>
+                                    <span class="service-value">${session.customerInfo.serviceReason || 'Not specified'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${session.appointmentDetails ? `
+                            <div class="appointment-notes">
+                                <h4>📝 Additional Notes</h4>
+                                <div class="notes-content">
+                                    <pre>${JSON.stringify(session.appointmentDetails, null, 2)}</pre>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
-                    
-                    <div class="customer-info">
-                        <div class="info-item">
-                            <div class="info-label">Service Type</div>
-                            <div class="info-value">${session.customerInfo.serviceType || 'Not specified'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Location</div>
-                            <div class="info-value">${session.customerInfo.location || 'Not specified'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Preferred Date</div>
-                            <div class="info-value ${session.customerInfo.preferredDate ? '' : 'null'}">${session.customerInfo.preferredDate || 'Not specified'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Preferred Time</div>
-                            <div class="info-value ${session.customerInfo.preferredTime ? '' : 'null'}">${session.customerInfo.preferredTime || 'Not specified'}</div>
-                        </div>
-                    </div>
-                    
-                    ${session.appointmentDetails ? `
-                        <div class="extracted-data">
-                            <h4>📅 Appointment Details</h4>
-                            <pre style="background: white; padding: 15px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(session.appointmentDetails, null, 2)}</pre>
-                        </div>
-                    ` : ''}
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             document.getElementById('appointments-content').innerHTML = appointmentsHtml;
         }
