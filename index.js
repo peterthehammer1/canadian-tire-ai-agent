@@ -580,7 +580,7 @@ app.post('/webhook/ai', async (req, res) => {
         // Clear existing customer info and replace with complete data
         session.customerInfo = {
           name: req.body.name || null,
-          phone: req.body.phone || null,
+          phone: req.body.phone || session.customerInfo.phone || null,
           email: req.body.email || null,
           carMake: req.body.carMake || null,
           carModel: req.body.carModel || null,
@@ -605,7 +605,7 @@ app.post('/webhook/ai', async (req, res) => {
               // Set complete customer info
       session.customerInfo = {
         name: req.body.name || null,
-        phone: req.body.phone || null,
+        phone: req.body.phone || session.customerInfo.phone || null,
         email: req.body.email || null,
         carMake: req.body.carMake || null,
         carModel: req.body.carModel || null,
