@@ -1454,10 +1454,10 @@
             // Filter for complete sessions only (with essential customer information)
             const completeSessions = currentData.filter(session => {
                 const customerInfo = session.customerInfo;
+                // More lenient filtering - require name, phone, and at least serviceType
                 const hasEssentialInfo = customerInfo.name && 
                                        customerInfo.phone && 
-                                       customerInfo.email &&
-                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                                       customerInfo.serviceType;
                 
                 return hasEssentialInfo;
             });
@@ -1621,10 +1621,10 @@
             // Filter for complete sessions only
             const completeSessions = currentData.filter(session => {
                 const customerInfo = session.customerInfo;
+                // More lenient filtering - require name, phone, and at least serviceType
                 const hasEssentialInfo = customerInfo.name && 
                                        customerInfo.phone && 
-                                       customerInfo.email &&
-                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                                       customerInfo.serviceType;
                 
                 return hasEssentialInfo;
             });
@@ -1717,8 +1717,7 @@
                 const customerInfo = session.customerInfo;
                 const hasEssentialInfo = customerInfo.name && 
                                        customerInfo.phone && 
-                                       customerInfo.email &&
-                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                                       customerInfo.serviceType;
                 
                 const hasAppointment = session.appointmentBooked === true || 
                                      (session.appointmentDetails && Object.keys(session.appointmentDetails).length > 0) ||
@@ -1983,8 +1982,7 @@
                 const customerInfo = session.customerInfo;
                 const hasEssentialInfo = customerInfo.name && 
                                        customerInfo.phone && 
-                                       customerInfo.email &&
-                                       (customerInfo.carMake || customerInfo.carModel || customerInfo.serviceType);
+                                       customerInfo.serviceType;
                 
                 return hasEssentialInfo;
             });
