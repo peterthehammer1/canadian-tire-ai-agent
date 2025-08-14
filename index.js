@@ -437,8 +437,13 @@ app.get('/webhook/ai', (req, res) => {
 app.post('/webhook/ai', async (req, res) => {
   try {
     console.log('📞 Webhook received!');
-    console.log('📋 Headers:', req.headers);
+    console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
     console.log('📦 Body:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 Body type:', typeof req.body);
+    console.log('🔍 Body keys:', Object.keys(req.body || {}));
+    console.log('🌐 Request URL:', req.url);
+    console.log('🔧 Request method:', req.method);
+    console.log('📊 Content-Type:', req.headers['content-type']);
     
     // Handle different possible data formats from Retell AI
     const event_type = req.body.event_type || req.body.type || req.body.event;
@@ -595,10 +600,72 @@ app.post('/webhook/ai', async (req, res) => {
       console.log('📋 Full payload:', JSON.stringify(req.body, null, 2));
     }
     
+    // Log current sessions after processing
+    const allSessions = callSessionManager.getAllSessions();
+    console.log('📊 Total sessions after webhook processing:', allSessions.length);
+    console.log('📋 Session IDs:', allSessions.map(s => s.callId));
+    
     res.json({ success: true, message: 'Webhook processed successfully' });
   } catch (error) {
     console.error('❌ Webhook error:', error);
     res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// Test endpoint to create sample data
+app.post('/api/test/create-session', (req, res) => {
+  try {
+    console.log('🧪 Creating test session...');
+    
+    const testCallId = 'test-call-' + Date.now();
+    const testPhone = '+15551234567';
+    
+    // Create a test session
+    const session = callSessionManager.createSession(testCallId, testPhone);
+    
+    // Add some test customer data
+    callSessionManager.updateCustomerInfo(testCallId, 'name', 'John Smith');
+    callSessionManager.updateCustomerInfo(testCallId, 'email', 'john.smith@example.com');
+    callSessionManager.updateCustomerInfo(testCallId, 'carMake', 'Honda');
+    callSessionManager.updateCustomerInfo(testCallId, 'carModel', 'Civic');
+    callSessionManager.updateCustomerInfo(testCallId, 'carYear', '2020');
+    callSessionManager.updateCustomerInfo(testCallId, 'serviceType', 'oil_change');
+    callSessionManager.updateCustomerInfo(testCallId, 'location', 'Downtown Toronto');
+    callSessionManager.updateCustomerInfo(testCallId, 'preferredDate', '2025-01-20');
+    callSessionManager.updateCustomerInfo(testCallId, 'preferredTime', '10:00');
+    
+    // End the session
+    callSessionManager.endSession(testCallId);
+    
+    console.log('✅ Test session created:', testCallId);
+    
+    res.json({ 
+      success: true, 
+      message: 'Test session created successfully',
+      sessionId: testCallId,
+      session: callSessionManager.getSession(testCallId)
+    });
+  } catch (error) {
+    console.error('❌ Error creating test session:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Test endpoint to get all sessions (for debugging)
+app.get('/api/test/sessions', (req, res) => {
+  try {
+    const allSessions = callSessionManager.getAllSessions();
+    console.log('🧪 Test endpoint - Total sessions:', allSessions.length);
+    
+    res.json({ 
+      success: true, 
+      sessions: allSessions,
+      count: allSessions.length,
+      sessionIds: allSessions.map(s => s.callId)
+    });
+  } catch (error) {
+    console.error('❌ Error getting test sessions:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
