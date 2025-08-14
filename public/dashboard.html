@@ -1324,6 +1324,9 @@
 
         // Load data on page load
         function loadInitialData() {
+            console.log('🚀 loadInitialData called');
+            alert('🚀 Dashboard JavaScript is executing!'); // Temporary test
+            
             // First try to load from localStorage for instant display
             const storedData = loadDataFromStorage();
             if (storedData && storedData.length > 0) {
@@ -1339,6 +1342,7 @@
             }
             
             // Always fetch fresh data from API
+            console.log('🔄 About to call fetchDataFromAPI...');
             fetchDataFromAPI();
         }
 
@@ -1346,13 +1350,17 @@
         async function fetchDataFromAPI() {
             try {
                 console.log('🔄 Fetching fresh data from API...');
+                console.log('🌐 Fetching from: https://www.autoservice.run/api/call/sessions');
+                
                 const response = await fetch('https://www.autoservice.run/api/call/sessions');
+                console.log('📡 Response received:', response.status, response.statusText);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const data = await response.json();
+                console.log('📊 Data parsed:', data);
                 
                 if (data.success && data.sessions && data.sessions.length > 0) {
                     currentData = data.sessions;
@@ -1372,16 +1380,19 @@
                 }
             } catch (error) {
                 console.error('❌ Error fetching data from API:', error);
+                console.error('❌ Error details:', error.message);
+                console.error('❌ Error stack:', error.stack);
+                
                 // If API fails, keep using stored data if available
                 if (!currentData || currentData.length === 0) {
                     document.getElementById('sessions-content').innerHTML = 
-                        '<div class="no-data">Error loading data. Please try again.</div>';
+                        '<div class="no-data">Error loading data. Please try again. Debug: ' + error.message + '</div>';
                     document.getElementById('customers-content').innerHTML = 
-                        '<div class="no-data">Error loading data. Please try again.</div>';
+                        '<div class="no-data">Error loading data. Please try again. Debug: ' + error.message + '</div>';
                     document.getElementById('appointments-content').innerHTML = 
-                        '<div class="no-data">Error loading data. Please try again.</div>';
+                        '<div class="no-data">Error loading data. Please try again. Debug: ' + error.message + '</div>';
                     document.getElementById('analytics-content').innerHTML = 
-                        '<div class="no-data">Error loading data. Please try again.</div>';
+                        '<div class="no-data">Error loading data. Please try again. Debug: ' + error.message + '</div>';
                 }
             }
         }
