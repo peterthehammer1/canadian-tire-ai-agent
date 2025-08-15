@@ -19,13 +19,36 @@ app.post('/api/webhook', (req, res) => {
     // B) { ...fields } direct
     // C) { payload: { ...fields } } or { data: { ...fields } }
     let payload = req.body;
-    if (payload && payload.arguments && typeof payload.arguments === 'object') {
-      // Function-call style – use arguments
-      payload = payload.arguments;
+    if (payload && payload.arguments) {
+      // Function-call style – arguments may be an object or a JSON string
+      if (typeof payload.arguments === 'string') {
+        try {
+          payload = JSON.parse(payload.arguments);
+        } catch (e) {
+          console.log('⚠️ Could not parse string arguments; falling back to body');
+        }
+      } else if (typeof payload.arguments === 'object') {
+        payload = payload.arguments;
+      }
     } else if (payload && payload.payload && typeof payload.payload === 'object') {
       payload = payload.payload;
     } else if (payload && payload.data && typeof payload.data === 'object') {
       payload = payload.data;
+    }
+
+    // If the wrapper name clobbered the real name (e.g., name: "cust_info"), prefer arguments
+    if (req.body && (req.body.name === 'cust_info' || req.body.tool_name === 'cust_info')) {
+      const maybeArgs = req.body.arguments;
+      if (maybeArgs) {
+        try {
+          const parsed = typeof maybeArgs === 'string' ? JSON.parse(maybeArgs) : maybeArgs;
+          if (parsed && typeof parsed === 'object') {
+            payload = parsed;
+          }
+        } catch (e) {
+          console.log('⚠️ Failed to coerce arguments from wrapper');
+        }
+      }
     }
 
     // If we still don't have meaningful fields, acknowledge without storing
