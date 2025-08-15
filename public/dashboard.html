@@ -237,10 +237,10 @@
             display: flex;
             flex-direction: column;
         }
-        .tile-header { background: #d32f2f; color: #fff; padding: 6px 10px; font-weight: 700; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; }
-        .tile-date { display: flex; align-items: center; gap: 8px; }
-        .tile-date-num { font-size: 24px; font-weight: 800; line-height: 1; }
-        .tile-date-text { line-height: 1.1; display: flex; flex-direction: column; font-size: 11px; opacity: 0.95; }
+        .tile-header { background: #d32f2f; color: #fff; padding: 8px 12px; font-weight: 700; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .tile-date { font-size: 16px; font-weight: 700; }
+        .tile-date-num { display:none; }
+        .tile-date-text { display:none; }
         .tile-time-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); padding: 3px 7px; border-radius: 12px; font-size: 11px; }
         .tile-body { 
             padding: 6px 8px; 
@@ -253,6 +253,8 @@
         }
         .tile-line { font-size: 12px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .tile-name { font-size: 14.5px; font-weight: 800; margin: 2px 0 6px; }
+        .tile-name-big { font-size: 22px; font-weight: 800; margin: 6px 0 8px; color: #1f2937; }
+        .divider { height: 1px; background: #ececec; margin: 4px 0 8px; }
         .tile-strong { font-weight: 700; }
         .badge { display: inline-block; padding: 2px 6px; font-size: 10.5px; border-radius: 999px; border: 1px solid #e5e5e5; background: #f7f7f7; }
         .badge.service { background: #e9f5e9; border-color: #b9e0b9; color: #1b5e20; font-weight: 700; }
@@ -261,9 +263,12 @@
         .row-flex { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .tile-icon-line { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .icon { width: 13px; height: 13px; color: #666; flex: 0 0 13px; }
-        .tile-columns { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 6px; align-content: start; align-items: start; }
-        .col { min-width: 0; display: grid; grid-template-rows: repeat(3, auto); row-gap: 4px; }
         .service-row { align-items: center; gap: 8px; }
+        .contact-card { background: #f6f7f9; border-radius: 10px; padding: 8px 10px; border: 1px solid #e9e9e9; }
+        .contact-card .tile-icon-line { margin: 4px 0; }
+        .service-card { background: #f0fbf4; border-left: 4px solid #1b5e20; border-radius: 10px; padding: 12px 10px; margin-top: 8px; }
+        .vehicle-title { font-size: 18px; font-weight: 800; color: #111827; margin: 8px 0; }
+        .location-box { display: flex; align-items: center; gap: 8px; border: 1px solid #e5e7eb; background: #fff; border-radius: 8px; padding: 8px 10px; }
         
         .loading {
             text-align: center;
@@ -546,40 +551,33 @@
                   .map(a => `
                     <div class="calendar-tile">
                         <div class="tile-header">
-                            <div class="tile-date">
-                                <div class="tile-date-num">${(new Date(a.appointmentDate || '')).getDate() || ''}</div>
-                                <div class="tile-date-text">
-                                    <span>${(new Date(a.appointmentDate || '')).toLocaleDateString('en-US',{ weekday:'short'}) || ''}</span>
-                                    <span>${(new Date(a.appointmentDate || '')).toLocaleDateString('en-US',{ month:'short', year:'numeric'}) || ''}</span>
-                            </div>
-                                </div>
+                            <div class="tile-date">${formatDateEST(a.appointmentDate || '')}</div>
                             <div class="tile-time-badge">${formatTimeEST(a.appointmentTime || '')}</div>
-                                </div>
+                        </div>
                         <div class="tile-body">
-                            <div class="tile-line tile-name">${a.customerName || 'Customer'}</div>
-                            <div class="tile-columns">
-                                <div class="col">
-                                    <div class="tile-icon-line">
-                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M4 8l8 5 8-5"></path><rect x="4" y="6" width="16" height="12" rx="2" ry="2" stroke-width="1.8" fill="none"></rect></svg>
-                                        <span class="tile-detail">${a.email || ''}</span>
-                            </div>
-                                    <div class="tile-icon-line">
-                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.3 1.78.54 2.63a2 2 0 0 1-.45 2.11L8 9a16 16 0 0 0 6 6l.54-1.15a2 2 0 0 1 2.11-.45c.85.24 1.73.42 2.63.54A2 2 0 0 1 22 16.92z"></path></svg>
-                                        <span class="tile-detail">${a.phone || ''}</span>
-                            </div>
-                        </div>
-                                <div class="col">
-                                    <div class="row-flex service-row">
-                                        <span class="badge service">${a.serviceType || 'Service'}</span>
-                                        ${a.triangleMember ? '<span class="badge member">Triangle Member</span>' : ''}
+                            <div class="tile-name-big">${a.customerName || 'Customer'}</div>
+                            <div class="divider"></div>
+                            <div class="contact-card">
+                                <div class="tile-icon-line">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M4 8l8 5 8-5"></path><rect x="4" y="6" width="16" height="12" rx="2" ry="2" stroke-width="1.8" fill="none"></rect></svg>
+                                    <span class="tile-detail">${a.email || ''}</span>
                                 </div>
-                                    <div class="tile-detail">${[a.carYear,a.carMake,a.carModel].filter(Boolean).join(' ')}</div>
-                                    <div class="tile-icon-line">
-                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                        <span class="tile-detail">${a.location || ''}</span>
+                                <div class="tile-icon-line">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.3 1.78.54 2.63a2 2 0 0 1-.45 2.11L8 9a16 16 0 0 0 6 6l.54-1.15a2 2 0 0 1 2.11-.45c.85.24 1.73.42 2.63.54A2 2 0 0 1 22 16.92z"></path></svg>
+                                    <span class="tile-detail">${a.phone || ''}</span>
+                                </div>
                             </div>
+                            <div class="service-card">
+                                <div class="row-flex service-row">
+                                    <span class="badge service">${a.serviceType || 'Service'}</span>
+                                    ${a.triangleMember ? '<span class="badge member">Triangle Member</span>' : ''}
+                                </div>
+                                <div class="vehicle-title">${[a.carYear,a.carMake,a.carModel].filter(Boolean).join(' ')}</div>
+                                <div class="location-box">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    <span class="tile-detail">${a.location || ''}</span>
+                                </div>
                             </div>
-                        </div>
                         </div>
                     </div>
                   `).join('');
