@@ -352,6 +352,18 @@
             // Fallback: strip timezone noise
             return s.replace(/GMT.*$/i, '').replace(/UTC.*$/i,'').trim();
         }
+
+        function formatDateEST(value) {
+            if (value === null || value === undefined) return '';
+            const s = String(value).trim();
+            // Try to parse known date strings
+            const d = new Date(s);
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' });
+            }
+            // Remove timezone noise if any
+            return s.replace(/\s+\d{2}:\d{2}:\d{2}.*$/,'');
+        }
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Dashboard loaded');
@@ -488,7 +500,7 @@
                   .sort((a,b) => ((a.appointmentDate||'') + ' ' + (a.appointmentTime||'')).localeCompare((b.appointmentDate||'') + ' ' + (b.appointmentTime||'')))
                   .map(a => `
                     <div class="calendar-tile">
-                        <div class="tile-header">${a.appointmentDate || ''}</div>
+                        <div class="tile-header">${formatDateEST(a.appointmentDate || '')}${a.appointmentTime ? ' • ' + formatTimeEST(a.appointmentTime) : ''}</div>
                         <div class="tile-body">
                             <div class="tile-line tile-strong">${a.customerName || 'Customer'}</div>
                             <div class="tile-line">${a.serviceType || 'Service'}</div>
