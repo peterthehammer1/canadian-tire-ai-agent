@@ -67,20 +67,23 @@
             color: #e6e6e6;
         }
 
-        /* Proudly Canadian badge */
-        .brand-proud { 
+        /* Header ribbon: CANADA'S STORE | Proudly Canadian Since 1922 */
+        .brand-ribbon { 
             background: #e31837; 
             color: #ffffff; 
             display: flex; 
             align-items: center; 
-            gap: 8px; 
+            gap: 10px; 
             padding: 6px 12px; 
             border-radius: 4px; 
-            font-weight: 600; 
-            letter-spacing: 0.2px;
+            font-weight: 700; 
+            letter-spacing: 0.3px;
             box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+            text-transform: uppercase;
         }
-        .brand-proud svg { width: 16px; height: 16px; fill: currentColor; flex: 0 0 16px; }
+        .brand-ribbon .sub { text-transform: none; font-weight: 600; letter-spacing: 0.2px; opacity: 0.95; }
+        .brand-ribbon .dot { opacity: 0.8; margin: 0 4px; }
+        .brand-ribbon svg { width: 16px; height: 16px; fill: currentColor; flex: 0 0 16px; }
 
         /* page container below the header */
         .page-wrap { max-width: 1200px; margin: 16px auto; padding: 0 20px 24px; }
@@ -325,11 +328,12 @@
                 <span class="brand-pill">Open • 8:00 AM – 5:00 PM</span>
             </div>
             <div class="brand-actions">
-                <div class="brand-proud" aria-label="Proudly Canadian">
+                <div class="brand-ribbon" aria-label="Canada's Store - Proudly Canadian Since 1922">
+                    <span>Canada's Store</span>
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 2l1.76 3.57 3.94.57-2.85 2.78.67 3.9L12 11.8 8.48 12.82l.67-3.9L6.3 6.14l3.94-.57L12 2z"></path>
                     </svg>
-                    <span>Proudly Canadian</span>
+                    <span class="sub">Proudly Canadian Since 1922</span>
                 </div>
             </div>
         </div>
