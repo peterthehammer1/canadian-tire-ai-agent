@@ -545,8 +545,13 @@
                 // grid of tiles, sorted newest first
                 const tiles = appointments
                   .slice()
-                  .sort((a,b) => apptTimestamp(b) - apptTimestamp(a))
-                  .map(a => `
+                  .map((a, idx) => ({ a, idx }))
+                  .sort((u, v) => {
+                    const tu = u.a.timestamp ? new Date(u.a.timestamp).getTime() : u.idx;
+                    const tv = v.a.timestamp ? new Date(v.a.timestamp).getTime() : v.idx;
+                    return tv - tu; // newest bookings first
+                  })
+                  .map(({ a }) => `
                     <div class="calendar-tile">
                         <div class="tile-header">
                             <div class="tile-date">${formatDateEST(a.appointmentDate || '')}</div>
