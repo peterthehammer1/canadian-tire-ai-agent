@@ -219,7 +219,8 @@
                 document.getElementById('customerList').innerHTML = '<div class="loading">Loading customer data...</div>';
                 document.getElementById('calendarView').innerHTML = '<div class="loading">Loading calendar...</div>';
                 
-                const response = await fetch('/api/appointments');
+                // Prefer Google Sheet via backend proxy if configured
+                const response = await fetch('/api/sheet/appointments');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);

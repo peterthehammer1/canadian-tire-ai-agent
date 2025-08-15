@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
+const SHEET_WEB_APP_URL = process.env.SHEET_WEB_APP_URL || '';
 
 // Middleware
 app.use(express.json());
@@ -159,6 +160,30 @@ app.get('/api/appointments', (req, res) => {
       message: 'Error fetching appointments',
       error: error.message
     });
+  }
+});
+
+// Proxy: read appointments from Google Apps Script (avoids browser CORS)
+app.get('/api/sheet/appointments', async (req, res) => {
+  try {
+    if (!SHEET_WEB_APP_URL) {
+      return res.status(500).json({ success: false, message: 'SHEET_WEB_APP_URL not set' });
+    }
+    const url = SHEET_WEB_APP_URL + (SHEET_WEB_APP_URL.includes('?') ? '&' : '?') + 'format=json';
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Sheet fetch failed: ${response.status}`);
+    }
+    const data = await response.json();
+    // Expecting { success: true, appointments: [...] }
+    if (data && Array.isArray(data.appointments)) {
+      return res.json({ success: true, appointments: data.appointments, count: data.appointments.length });
+    }
+    // Fallback if script returns raw rows
+    return res.json(data);
+  } catch (error) {
+    console.error('❌ /api/sheet/appointments error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching sheet data', error: error.message });
   }
 });
 
