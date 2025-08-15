@@ -319,6 +319,15 @@
     </div>
 
     <script>
+        // Helper to display times as EST (presentation only)
+        function toEST(dateStr, timeStr) {
+            try {
+                const str = [dateStr || '', timeStr || ''].filter(Boolean).join(' ');
+                return str.replace(/GMT|UTC/gi, 'EST');
+            } catch (_) {
+                return [dateStr || '', timeStr || ''].filter(Boolean).join(' ');
+            }
+        }
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Dashboard loaded');
