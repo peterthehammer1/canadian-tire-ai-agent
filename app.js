@@ -13,26 +13,66 @@ let appointments = [];
 app.post('/api/webhook', (req, res) => {
   try {
     console.log('📞 Webhook received:', JSON.stringify(req.body, null, 2));
-    
-    // Extract appointment data from Retell AI
+
+    // Support multiple payload shapes:
+    // A) { name: 'cust_info', arguments: { ...fields } }
+    // B) { ...fields } direct
+    // C) { payload: { ...fields } } or { data: { ...fields } }
+    let payload = req.body;
+    if (payload && payload.arguments && typeof payload.arguments === 'object') {
+      // Function-call style – use arguments
+      payload = payload.arguments;
+    } else if (payload && payload.payload && typeof payload.payload === 'object') {
+      payload = payload.payload;
+    } else if (payload && payload.data && typeof payload.data === 'object') {
+      payload = payload.data;
+    }
+
+    // If we still don't have meaningful fields, acknowledge without storing
+    const hasAnyField = payload && (
+      payload.name || payload.phone || payload.serviceType || payload.location ||
+      payload.preferredDate || payload.preferredTime
+    );
+    if (!hasAnyField) {
+      return res.json({ success: true, message: 'No customer fields provided (noop)' });
+    }
+
+    // Extract appointment data from payload
     const appointmentData = {
       id: Date.now().toString(),
       timestamp: new Date().toISOString(),
-      customerName: req.body.name || 'Unknown',
-      phone: req.body.phone || 'Unknown',
-      email: req.body.email || '',
-      carMake: req.body.carMake || '',
-      carModel: req.body.carModel || '',
-      carYear: req.body.carYear || '',
-      serviceType: req.body.serviceType || 'Unknown',
-      location: req.body.location || 'Unknown',
-      appointmentDate: req.body.preferredDate || 'Unknown',
-      appointmentTime: req.body.preferredTime || 'Unknown',
+      customerName: payload.name || 'Unknown',
+      phone: payload.phone || 'Unknown',
+      email: payload.email || '',
+      carMake: payload.carMake || '',
+      carModel: payload.carModel || '',
+      carYear: payload.carYear || '',
+      serviceType: payload.serviceType || 'Unknown',
+      location: payload.location || 'Unknown',
+      appointmentDate: payload.preferredDate || 'Unknown',
+      appointmentTime: payload.preferredTime || 'Unknown',
       status: 'confirmed'
     };
-    
-    // Store the appointment
-    appointments.push(appointmentData);
+
+    // If this was a function-call wrapper, avoid creating placeholder/empty records
+    const requiredFilled = appointmentData.customerName !== 'Unknown' &&
+      appointmentData.phone !== 'Unknown' &&
+      appointmentData.serviceType !== 'Unknown' &&
+      appointmentData.location !== 'Unknown' &&
+      appointmentData.appointmentDate !== 'Unknown' &&
+      appointmentData.appointmentTime !== 'Unknown';
+
+    // Store the appointment only if it has at least name+phone+serviceType or it's a full record
+    if (
+      appointmentData.customerName !== 'Unknown' ||
+      appointmentData.phone !== 'Unknown' ||
+      appointmentData.serviceType !== 'Unknown' ||
+      appointmentData.location !== 'Unknown'
+    ) {
+      appointments.push(appointmentData);
+    } else {
+      return res.json({ success: true, message: 'Ignored empty payload' });
+    }
     
     console.log('✅ Appointment stored:', appointmentData.id);
     console.log('📊 Total appointments:', appointments.length);
@@ -40,7 +80,8 @@ app.post('/api/webhook', (req, res) => {
     res.json({
       success: true,
       message: 'Appointment received and stored',
-      appointmentId: appointmentData.id
+      appointmentId: appointmentData.id,
+      completeness: requiredFilled ? 'complete' : 'partial'
     });
     
   } catch (error) {
