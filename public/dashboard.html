@@ -393,6 +393,14 @@
             // Remove timezone noise if any
             return s.replace(/\s+\d{2}:\d{2}:\d{2}.*$/,'');
         }
+
+        // Numeric timestamp for sorting (desc = newest first)
+        function apptTimestamp(a) {
+            const s = [a.appointmentDate || '', a.appointmentTime || ''].join(' ');
+            const d = new Date(s);
+            if (!isNaN(d.getTime())) return d.getTime();
+            return 0; // unknown dates go last
+        }
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Dashboard loaded');
@@ -483,7 +491,10 @@
                 return str.replace(/GMT|UTC/gi, 'EST');
             };
 
-            const cards = appointments.map(a => `
+            const cards = appointments
+                .slice()
+                .sort((x, y) => apptTimestamp(y) - apptTimestamp(x))
+                .map(a => `
                 <div class="review-card">
                     <div class="review-header">Contact Information</div>
                     <div class="review-body">
@@ -524,9 +535,10 @@
             const sortedDates = Object.keys(appointmentsByDate).sort();
 
             const calendarHtml = (() => {
-                // grid of tiles, each appointment is a tile styled like a calendar day
+                // grid of tiles, sorted newest first
                 const tiles = appointments
-                  .sort((a,b) => ((a.appointmentDate||'') + ' ' + (a.appointmentTime||'')).localeCompare((b.appointmentDate||'') + ' ' + (b.appointmentTime||'')))
+                  .slice()
+                  .sort((a,b) => apptTimestamp(b) - apptTimestamp(a))
                   .map(a => `
                     <div class="calendar-tile">
                         <div class="tile-header">
