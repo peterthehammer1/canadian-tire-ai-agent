@@ -14,17 +14,61 @@
         body {
             font-family: Arial, sans-serif;
             background: #f5f5f5;
-            padding: 20px;
+            padding: 0;
         }
-        
-        .header {
-            background: #d32f2f;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 20px;
+
+        /* --- Canadian Tire style header (non-intrusive to data flow) --- */
+        .brand-bar {
+            background: #1f1f1f;
+            color: #ffffff;
+            border-bottom: 3px solid #e31837;
         }
+        .brand-wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 12px 20px;
+        }
+        .brand-logo {
+            height: 26px;
+            width: auto;
+            display: block;
+        }
+        .brand-divider { height: 22px; width: 1px; background: #3a3a3a; }
+        .brand-title {
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            font-size: 14px;
+        }
+        .brand-flex { display: flex; align-items: center; gap: 10px; }
+        .brand-pill {
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            padding: 6px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #dcdcdc;
+        }
+        .brand-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+        .brand-btn {
+            background: #e31837;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .brand-btn.alt {
+            background: transparent;
+            border: 1px solid #3a3a3a;
+            color: #e6e6e6;
+        }
+
+        /* page container below the header */
+        .page-wrap { max-width: 1200px; margin: 16px auto; padding: 0 20px 24px; }
         
         .stats {
             display: grid;
@@ -162,11 +206,26 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🚗 Canadian Tire Service Department</h1>
-        <p>Appointment Management Dashboard</p>
+    <!-- Professional header (visual only) -->
+    <div class="brand-bar">
+        <div class="brand-wrap">
+            <img src="/public/images/ctlogo.png" alt="Canadian Tire" class="brand-logo" onerror="this.src='/images/ctlogo.png'">
+            <span class="brand-title">Canadian Tire • Service Department</span>
+            <span class="brand-divider"></span>
+            <div class="brand-flex">
+                <span class="brand-pill">Waterloo, ON</span>
+                <span class="brand-pill">Open • 8:00 AM – 5:00 PM</span>
+            </div>
+            <div class="brand-actions">
+                <a class="brand-btn alt" href="https://www.canadiantire.ca/en/ship-to-home/book-appointment.html" target="_blank" rel="noopener">Book Auto Service</a>
+                <button class="brand-btn" onclick="loadAppointments()">Refresh Data</button>
+            </div>
+        </div>
     </div>
 
+    <div class="page-wrap">
+
+    <!-- keep legacy refresh for users; header also has a refresh button -->
     <button class="refresh-btn" onclick="loadAppointments()">🔄 Refresh Data</button>
 
     <div class="stats">
