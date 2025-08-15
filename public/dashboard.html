@@ -67,6 +67,21 @@
             color: #e6e6e6;
         }
 
+        /* Proudly Canadian badge */
+        .brand-proud { 
+            background: #e31837; 
+            color: #ffffff; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            font-weight: 600; 
+            letter-spacing: 0.2px;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+        }
+        .brand-proud svg { width: 16px; height: 16px; fill: currentColor; flex: 0 0 16px; }
+
         /* page container below the header */
         .page-wrap { max-width: 1200px; margin: 16px auto; padding: 0 20px 24px; }
         
@@ -310,7 +325,12 @@
                 <span class="brand-pill">Open • 8:00 AM – 5:00 PM</span>
             </div>
             <div class="brand-actions">
-                <a class="brand-btn alt" href="https://www.canadiantire.ca/en/ship-to-home/book-appointment.html" target="_blank" rel="noopener">Book Auto Service</a>
+                <div class="brand-proud" aria-label="Proudly Canadian">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2l1.76 3.57 3.94.57-2.85 2.78.67 3.9L12 11.8 8.48 12.82l.67-3.9L6.3 6.14l3.94-.57L12 2z"></path>
+                    </svg>
+                    <span>Proudly Canadian</span>
+                </div>
             </div>
         </div>
     </div>
