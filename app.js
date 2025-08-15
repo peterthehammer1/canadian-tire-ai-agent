@@ -51,6 +51,31 @@ app.post('/api/webhook', (req, res) => {
       }
     }
 
+    // Deep fallback: search recursively for the first object containing one of our expected fields
+    const expectedKeys = new Set(['name','phone','email','carMake','carModel','carYear','serviceType','location','preferredDate','preferredTime','triangleMember']);
+    function deepFind(obj, depth = 0) {
+      if (!obj || typeof obj !== 'object' || depth > 4) return null;
+      const keys = Object.keys(obj);
+      if (keys.some(k => expectedKeys.has(k))) return obj;
+      for (const k of keys) {
+        const val = obj[k];
+        if (typeof val === 'string') {
+          // Sometimes arguments is a JSON string
+          try {
+            const parsed = JSON.parse(val);
+            const found = deepFind(parsed, depth + 1);
+            if (found) return found;
+          } catch (_) {}
+        } else {
+          const found = deepFind(val, depth + 1);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    const deepCandidate = deepFind(req.body);
+    if (deepCandidate) payload = deepCandidate;
+
     // If we still don't have meaningful fields, acknowledge without storing
     const hasAnyField = payload && (
       payload.name || payload.phone || payload.serviceType || payload.location ||
