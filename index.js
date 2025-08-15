@@ -182,16 +182,40 @@ app.post('/api/call/start', (req, res) => {
 
 app.post('/api/call/update-info', (req, res) => {
   try {
-    const { callId, updates } = req.body;
-    
-    if (!callId || !updates) {
-      return res.status(400).json({ error: 'Call ID and updates are required' });
+    const { callId, updates, field, value } = req.body;
+
+    if (!callId) {
+      return res.status(400).json({ error: 'Call ID is required' });
     }
-    
-    const session = callSessionManager.updateCustomerInfo(callId, updates);
+
+    // Support two formats:
+    // 1) { callId, field, value }
+    // 2) { callId, updates: { name: 'John', phone: '...' } }
+    let totalUpdated = 0;
+
+    if (updates && typeof updates === 'object') {
+      Object.entries(updates).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') {
+          const ok = callSessionManager.updateCustomerInfo(callId, k, v);
+          if (ok) totalUpdated += 1;
+        }
+      });
+    } else if (field) {
+      const ok = callSessionManager.updateCustomerInfo(callId, field, value);
+      if (ok) totalUpdated += 1;
+    } else {
+      return res.status(400).json({ error: 'Provide either updates object or field/value' });
+    }
+
+    const session = callSessionManager.getSessionData(callId);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
     res.json({ 
-      success: true, 
-      session: callSessionManager.getSessionSummary(callId),
+      success: true,
+      updatedFields: totalUpdated,
+      session,
       message: 'Customer information updated successfully'
     });
   } catch (error) {
