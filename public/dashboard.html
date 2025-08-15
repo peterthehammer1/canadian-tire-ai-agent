@@ -177,6 +177,45 @@
             border-left: 3px solid #4caf50;
         }
         
+        /* Calendar day cards */
+        .calendar-day { 
+            background: #ffffff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
+            margin-bottom: 16px; 
+            overflow: hidden; 
+            border: 1px solid #eee;
+        }
+        .day-header { 
+            background: #d32f2f; 
+            color: #fff; 
+            padding: 12px 14px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+        }
+        .day-title { font-weight: 700; letter-spacing: 0.2px; }
+        .day-count { 
+            font-size: 12px; 
+            background: rgba(255,255,255,0.18); 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+        }
+        .day-appointments { padding: 12px; }
+        .appt-item { 
+            background: #fafafa; 
+            border: 1px solid #eee; 
+            border-radius: 6px; 
+            padding: 10px 12px; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin-bottom: 8px; 
+        }
+        .appt-time { min-width: 84px; font-weight: 700; color: #2e7d32; }
+        .appt-main { font-weight: 600; color: #333; }
+        .appt-sub { font-size: 12px; color: #666; }
+        
         .loading {
             text-align: center;
             color: #666;
@@ -410,20 +449,26 @@
 
             const calendarHtml = sortedDates.map(date => {
                 const dayAppointments = appointmentsByDate[date].sort((a, b) => 
-                    a.appointmentTime.localeCompare(b.appointmentTime)
+                    (a.appointmentTime || '').localeCompare(b.appointmentTime || '')
                 );
 
-                const dayAppointmentsHtml = dayAppointments.map(appointment => `
-                    <div class="time-slot">
-                        <strong>${appointment.appointmentTime}</strong> - ${appointment.customerName}<br>
-                        <small>${appointment.serviceType} • ${appointment.carMake} ${appointment.carModel}</small>
+                const items = dayAppointments.map(a => `
+                    <div class="appt-item">
+                        <div class="appt-time">${a.appointmentTime || '—'}</div>
+                        <div>
+                            <div class="appt-main">${a.customerName || 'Customer'}</div>
+                            <div class="appt-sub">${a.serviceType || 'Service'} • ${a.carMake || ''} ${a.carModel || ''}</div>
+                        </div>
                     </div>
                 `).join('');
 
                 return `
-                    <div class="date-group">
-                        <div class="date-header">${date}</div>
-                        ${dayAppointmentsHtml}
+                    <div class="calendar-day">
+                        <div class="day-header">
+                            <div class="day-title">${date || 'Date'}</div>
+                            <div class="day-count">${dayAppointments.length} appointment${dayAppointments.length === 1 ? '' : 's'}</div>
+                        </div>
+                        <div class="day-appointments">${items}</div>
                     </div>
                 `;
             }).join('');
