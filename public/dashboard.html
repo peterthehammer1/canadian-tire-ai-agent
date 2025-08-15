@@ -260,6 +260,8 @@
         .row-flex { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .tile-icon-line { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .icon { width: 14px; height: 14px; color: #666; flex: 0 0 14px; }
+        .tile-columns { display: grid; grid-template-columns: 1fr 1fr; column-gap: 10px; row-gap: 4px; align-content: start; }
+        .col { min-width: 0; }
         
         .loading {
             text-align: center;
@@ -553,22 +555,28 @@
                         </div>
                         <div class="tile-body">
                             <div class="tile-line tile-strong">${a.customerName || 'Customer'}</div>
-                            <div class="row-flex">
-                                <span class="badge service">${a.serviceType || 'Service'}</span>
-                                ${a.triangleMember ? '<span class="badge member">Triangle Member</span>' : ''}
-                            </div>
-                            <div class="tile-detail">${[a.carYear,a.carMake,a.carModel].filter(Boolean).join(' ')}</div>
-                            <div class="tile-icon-line">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M4 8l8 5 8-5"></path><rect x="4" y="6" width="16" height="12" rx="2" ry="2" stroke-width="1.8" fill="none"></rect></svg>
-                                <span class="tile-detail">${a.email || ''}</span>
-                            </div>
-                            <div class="tile-icon-line">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.3 1.78.54 2.63a2 2 0 0 1-.45 2.11L8 9a16 16 0 0 0 6 6l.54-1.15a2 2 0 0 1 2.11-.45c.85.24 1.73.42 2.63.54A2 2 0 0 1 22 16.92z"></path></svg>
-                                <span class="tile-detail">${a.phone || ''}</span>
-                            </div>
-                            <div class="tile-icon-line">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                <span class="tile-detail">${a.location || ''}</span>
+                            <div class="tile-columns">
+                                <div class="col">
+                                    <div class="tile-icon-line">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M4 8l8 5 8-5"></path><rect x="4" y="6" width="16" height="12" rx="2" ry="2" stroke-width="1.8" fill="none"></rect></svg>
+                                        <span class="tile-detail">${a.email || ''}</span>
+                                    </div>
+                                    <div class="tile-icon-line">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.09 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.3 1.78.54 2.63a2 2 0 0 1-.45 2.11L8 9a16 16 0 0 0 6 6l.54-1.15a2 2 0 0 1 2.11-.45c.85.24 1.73.42 2.63.54A2 2 0 0 1 22 16.92z"></path></svg>
+                                        <span class="tile-detail">${a.phone || ''}</span>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="row-flex">
+                                        <span class="badge service">${a.serviceType || 'Service'}</span>
+                                        ${a.triangleMember ? '<span class="badge member">Triangle Member</span>' : ''}
+                                    </div>
+                                    <div class="tile-detail">${[a.carYear,a.carMake,a.carModel].filter(Boolean).join(' ')}</div>
+                                    <div class="tile-icon-line">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                        <span class="tile-detail">${a.location || ''}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
