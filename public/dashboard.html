@@ -256,6 +256,8 @@
         .badge { display: inline-block; padding: 2px 8px; font-size: 11px; border-radius: 999px; border: 1px solid #e5e5e5; background: #f7f7f7; }
         .badge.service { background: #e9f5e9; border-color: #b9e0b9; color: #1b5e20; font-weight: 700; }
         .badge.member { background: #fff7e6; border-color: #ffe0a6; color: #8a5d00; font-weight: 700; }
+        .tile-detail { font-size: 12px; color: #555; }
+        .row-flex { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         
         .loading {
             text-align: center;
@@ -537,9 +539,14 @@
                         </div>
                         <div class="tile-body">
                             <div class="tile-line tile-strong">${a.customerName || 'Customer'}</div>
-                            <div class="tile-line"><span class="badge service">${a.serviceType || 'Service'}</span></div>
-                            <div class="tile-line">${[a.carYear,a.carMake,a.carModel].filter(Boolean).join(' ')}</div>
-                            ${a.triangleMember ? '<div class="tile-line"><span class="badge member">Triangle Member</span></div>' : ''}
+                            <div class="row-flex">
+                                <span class="badge service">${a.serviceType || 'Service'}</span>
+                                ${a.triangleMember ? '<span class="badge member">Triangle Member</span>' : ''}
+                            </div>
+                            <div class="tile-detail">${[a.carYear,a.carMake,a.carModel].filter(Boolean).join(' ')}</div>
+                            <div class="tile-detail">${a.email || ''}</div>
+                            <div class="tile-detail">${a.phone || ''}</div>
+                            <div class="tile-detail">${a.location || ''}</div>
                         </div>
                     </div>
                   `).join('');
