@@ -237,18 +237,25 @@
             display: flex; 
             flex-direction: column;
         }
-        .tile-header { background: #d32f2f; color: #fff; padding: 10px 12px; font-weight: 700; flex: 0 0 auto; }
+        .tile-header { background: #d32f2f; color: #fff; padding: 8px 10px; font-weight: 700; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; }
+        .tile-date { display: flex; align-items: center; gap: 8px; }
+        .tile-date-num { font-size: 26px; font-weight: 800; line-height: 1; }
+        .tile-date-text { line-height: 1; display: flex; flex-direction: column; font-size: 12px; opacity: 0.95; }
+        .tile-time-badge { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); padding: 4px 8px; border-radius: 12px; font-size: 12px; }
         .tile-body { 
-            padding: 12px; 
+            padding: 10px; 
             display: flex; 
             flex-direction: column; 
-            justify-content: center; 
-            row-gap: 6px; 
+            justify-content: space-evenly; 
+            row-gap: 4px; 
             flex: 1 1 auto; 
             overflow: hidden; 
         }
-        .tile-line { font-size: 13px; color: #333; }
+        .tile-line { font-size: 13px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .tile-strong { font-weight: 700; }
+        .badge { display: inline-block; padding: 2px 8px; font-size: 11px; border-radius: 999px; border: 1px solid #e5e5e5; background: #f7f7f7; }
+        .badge.service { background: #e9f5e9; border-color: #b9e0b9; color: #1b5e20; font-weight: 700; }
+        .badge.member { background: #fff7e6; border-color: #ffe0a6; color: #8a5d00; font-weight: 700; }
         
         .loading {
             text-align: center;
@@ -518,12 +525,21 @@
                   .sort((a,b) => ((a.appointmentDate||'') + ' ' + (a.appointmentTime||'')).localeCompare((b.appointmentDate||'') + ' ' + (b.appointmentTime||'')))
                   .map(a => `
                     <div class="calendar-tile">
-                        <div class="tile-header">${formatDateEST(a.appointmentDate || '')}${a.appointmentTime ? ' • ' + formatTimeEST(a.appointmentTime) : ''}</div>
+                        <div class="tile-header">
+                            <div class="tile-date">
+                                <div class="tile-date-num">${(new Date(a.appointmentDate || '')).getDate() || ''}</div>
+                                <div class="tile-date-text">
+                                    <span>${(new Date(a.appointmentDate || '')).toLocaleDateString('en-US',{ weekday:'short'}) || ''}</span>
+                                    <span>${(new Date(a.appointmentDate || '')).toLocaleDateString('en-US',{ month:'short', year:'numeric'}) || ''}</span>
+                                </div>
+                            </div>
+                            <div class="tile-time-badge">${formatTimeEST(a.appointmentTime || '')}</div>
+                        </div>
                         <div class="tile-body">
                             <div class="tile-line tile-strong">${a.customerName || 'Customer'}</div>
-                            <div class="tile-line">${a.serviceType || 'Service'}</div>
+                            <div class="tile-line"><span class="badge service">${a.serviceType || 'Service'}</span></div>
                             <div class="tile-line">${[a.carYear,a.carMake,a.carModel].filter(Boolean).join(' ')}</div>
-                            <div class="tile-line">${formatTimeEST(a.appointmentTime || '')}</div>
+                            ${a.triangleMember ? '<div class="tile-line"><span class="badge member">Triangle Member</span></div>' : ''}
                         </div>
                     </div>
                   `).join('');
