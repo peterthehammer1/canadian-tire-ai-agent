@@ -328,6 +328,30 @@
                 return [dateStr || '', timeStr || ''].filter(Boolean).join(' ');
             }
         }
+
+        // Format time values (handles Google Sheets Date objects like 1899-12-30 10:00:00 ...)
+        function formatTimeEST(value) {
+            if (value === null || value === undefined) return '';
+            // If already in AM/PM plain text, keep
+            const s = String(value).trim();
+            if (/am|pm/i.test(s) && !/GMT|UTC/i.test(s)) return s.toUpperCase().replace(/\s+EST.*/i,'');
+            // Try to parse as Date
+            const d = new Date(s);
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Toronto' });
+            }
+            // If looks like HH:MM (24h), convert
+            const m = s.match(/^(\d{1,2}):(\d{2})/);
+            if (m) {
+                let h = parseInt(m[1], 10);
+                const min = m[2];
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                if (h === 0) h = 12; else if (h > 12) h -= 12;
+                return `${h}:${min} ${ampm}`;
+            }
+            // Fallback: strip timezone noise
+            return s.replace(/GMT.*$/i, '').replace(/UTC.*$/i,'').trim();
+        }
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Dashboard loaded');
@@ -469,7 +493,7 @@
                             <div class="tile-line tile-strong">${a.customerName || 'Customer'}</div>
                             <div class="tile-line">${a.serviceType || 'Service'}</div>
                             <div class="tile-line">${[a.carYear,a.carMake,a.carModel].filter(Boolean).join(' ')}</div>
-                            <div class="tile-line">${toEST('', a.appointmentTime || '')}</div>
+                            <div class="tile-line">${formatTimeEST(a.appointmentTime || '')}</div>
                         </div>
                     </div>
                   `).join('');
